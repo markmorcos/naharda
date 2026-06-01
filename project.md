@@ -155,12 +155,14 @@ naharda/                          # markmorcos/naharda (monorepo)
 ├── project.md                    # this document (the constitution)
 ├── README.md                     # monorepo overview + links to api/ and web/
 ├── docker-compose.yml            # local dev: api + postgres (+ web later)
-├── specs/                        # feature specs — shared across the monorepo (see §13)
-│   ├── 0001-<slug>/
-│   │   ├── spec.md               # what & why
-│   │   ├── plan.md               # how (architecture, files, migrations, sources)
+├── openspec/                     # OpenSpec: changes + durable capability specs (see §13)
+│   ├── changes/<name>/           # a proposed change (verb-led name, unnumbered)
+│   │   ├── proposal.md           # what & why
+│   │   ├── design.md             # how (architecture, files, migrations, sources)
 │   │   └── tasks.md              # ordered, checkable tasks
-│   └── ...
+│   ├── specs/<capability>/       # durable truth per capability (fx, gold, …), fed on archive
+│   │   └── spec.md
+│   └── config.yaml
 ├── api/                          # Go backend service
 │   ├── cmd/server/main.go        # entrypoint; MODE=api|ingest|all
 │   ├── internal/
@@ -186,8 +188,8 @@ naharda/                          # markmorcos/naharda (monorepo)
 
 **Monorepo conventions:**
 - Each deployable subproject (`api/`, `web/`) owns its own `Dockerfile` and `deployment.yaml`.
-- `specs/` is repo-wide; a spec touching only `api/` or only `web/` still lives in the shared
-  numbered sequence (spec numbers are global, not per-service).
+- `openspec/` is repo-wide; a change touching only `api/` or only `web/` still lives in the
+  shared `openspec/changes/` set (changes are global, not per-service).
 - `project.md` (this file) is the single source of truth for both services.
 
 ---
@@ -350,32 +352,38 @@ Stripe Tax handles VAT/MOSS. **The non-commercial restriction on free/Hobby tier
 
 ## 13. Spec-Driven Development
 
-This file is the **constitution**. Concrete work happens in numbered **feature specs** under
-`specs/` (shared across the whole monorepo). Workflow:
+This file is the **constitution**. Concrete work happens as **OpenSpec changes** under
+`openspec/changes/` (shared across the whole monorepo), which accumulate durable truth into
+**capability specs** under `openspec/specs/`. Workflow:
 
-1. **Create a spec folder:** `specs/NNNN-short-slug/` (zero-padded, incrementing, repo-global).
-2. **`spec.md`** — the _what & why_: problem, user value, scope, non-goals, acceptance criteria.
+1. **Create a change:** `openspec/changes/<verb-led-name>/` (e.g. `add-bootstrap` — named, not
+   numbered; roadmap order lives in §8, not in the folder name).
+2. **`proposal.md`** — the _what & why_: problem, user value, scope, non-goals, acceptance criteria.
    Must cite which `project.md` principles/standards it relies on; must not contradict them
    (if it must, amend `project.md` first via the Decision Log).
-3. **`plan.md`** — the _how_: architecture, files touched (note `api/` vs `web/`), data model
+3. **`design.md`** — the _how_: architecture, files touched (note `api/` vs `web/`), data model
    changes, migrations, external sources (with ToS notes), risks.
 4. **`tasks.md`** — ordered, individually checkable tasks; each maps to a small PR.
 5. **Implement** against `tasks.md`; keep PRs vertical (one slice end-to-end).
-6. **Amend `project.md`** only when a durable decision changes; record it in the Decision Log.
+6. **Archive** the change (`openspec archive`) to fold its requirements into the relevant
+   `openspec/specs/<capability>/spec.md` — the durable, living truth.
+7. **Amend `project.md`** only when a durable decision changes; record it in the Decision Log.
 
 **Rules of thumb:**
-- If it's stable across features → it belongs here. If it churns per feature → it belongs in a spec.
-- Specs reference this doc by section; this doc never references specs (stays evergreen).
-- Spec numbers are global across the monorepo, even if a spec touches only one service.
-- Ambiguity inside a spec is resolved by [§2 Principles](#2-principles); if Principles don't
+- If it's stable across features → it belongs here. If it churns per feature → it belongs in a change/spec.
+- Changes & specs reference this doc by section; this doc never references them (stays evergreen).
+- Capability specs are the durable layer; changes are ephemeral and archived once shipped.
+- Ambiguity inside a change is resolved by [§2 Principles](#2-principles); if Principles don't
   settle it, mark `TODO(ask)` and ask the human.
 
-Suggested first specs:
-- `0001-bootstrap` — `api/` scaffold, config, Postgres+migrations, health/readiness, deploy pipeline.
-- `0002-safe-endpoints` — calendar, prayer-times, weather, AQI, cities (no 🟡 sources).
-- `0003-fx-official-and-gold-world` — official FX + world-derived gold ingest & endpoints.
-- `0004-sensitive-sources` — parallel FX + retail gold (gated on source approval).
-- `0005-dashboard` — `web/` static dashboard + email capture + `/v1/stats` integration.
+Suggested first changes (named, built in dependency order — see §8):
+- `add-bootstrap` — `api/` scaffold, config, Postgres+migrations, all middleware, health/readiness,
+  deploy pipeline, and the full v1 schema incl. dormant hooks (`api_keys`, `usage_log`, `signups`,
+  `manual_override`).
+- `add-safe-endpoints` — calendar, prayer-times, weather, AQI, cities, and **fuel** (🟢, manual-entry).
+- `add-fx-official-and-gold-world` — official FX + world-derived gold + data-quality machinery.
+- `add-sensitive-sources` — parallel FX + retail gold (🟡, gated on source approval, flag-off).
+- `add-dashboard` — `web/` static-first dashboard (hybrid SSR) + email capture + `/v1/stats`.
 
 ---
 
@@ -409,6 +417,7 @@ Append-only. Each entry: date, decision, rationale, and what it supersedes.
 | 2026-06-01 | Brand = **Naharda** (romanized w/o article) | `naharda.com` available; "today" is congruent with the product; follows Talabat/Vezeeta romanization norm. Supersedes working name "MENA Data API". |
 | 2026-06-01 | Primary TLD = **`.com`** (`naharda.com`) | Long-term-safe and B2B-trusted; `.io` only as a redirect given Chagos/Mauritius uncertainty over that TLD. |
 | 2026-06-01 | **Single monorepo `markmorcos/naharda`** (`api/` + `web/` + `specs/`) | Mirrors eventlane's monorepo split; one source of truth for the constitution and global spec sequence; per-service `deployment.yaml` + deploy workflow. |
+| 2026-06-01 | Adopt **OpenSpec** (`openspec/changes/` + `openspec/specs/`), **unnumbered** verb-led change names | Use the configured tooling; gain a durable capability-spec layer §13 lacked; roadmap order lives in §8, not folder numbers. Supersedes the `specs/NNNN-slug/` convention previously in §7/§13. |
 
 ---
 
