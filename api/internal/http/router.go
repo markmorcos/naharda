@@ -33,8 +33,16 @@ func NewRouter(cfg config.Config, st *store.Store, logger *slog.Logger) http.Han
 	r.Get("/healthz", h.Healthz)
 	r.Get("/readyz", h.Readyz)
 
-	// Versioned API surface. Endpoints are added by later changes.
-	r.Route("/v1", func(r chi.Router) {})
+	// Versioned API surface.
+	r.Route("/v1", func(r chi.Router) {
+		// Safe (🟢) read endpoints.
+		r.Get("/cities", h.Cities)
+		r.Get("/calendar", h.Calendar)
+		r.Get("/prayer-times/{city}", h.PrayerTimes)
+		r.Get("/weather/{city}", h.Weather)
+		r.Get("/aqi/{city}", h.AirQuality)
+		r.Get("/fuel", h.Fuel)
+	})
 
 	return r
 }

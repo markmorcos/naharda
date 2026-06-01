@@ -29,19 +29,27 @@ func JSON(w http.ResponseWriter, r *http.Request, maxAge int, data any, meta dom
 		meta.Sources = []domain.Source{}
 	}
 
-	body, err := json.Marshal(domain.Envelope{Data: data, Meta: meta})
+	// ETag hashes the DATA payload only — not the volatile meta timestamps
+	// (cached_at / fetched_at) — so it stays stable within the cache window and
+	// conditional requests actually match (§9.1).
+	dataBytes, err := json.Marshal(data)
 	if err != nil {
 		Error(w, http.StatusInternalServerError, "internal", "Failed to encode response.", 0)
 		return
 	}
-
-	etag := etagFor(body)
+	etag := etagFor(dataBytes)
 	w.Header().Set("ETag", etag)
 	w.Header().Set("Cache-Control", "public, max-age="+strconv.Itoa(maxAge))
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 
 	if match := r.Header.Get("If-None-Match"); match != "" && match == etag {
 		w.WriteHeader(http.StatusNotModified)
+		return
+	}
+
+	body, err := json.Marshal(domain.Envelope{Data: data, Meta: meta})
+	if err != nil {
+		Error(w, http.StatusInternalServerError, "internal", "Failed to encode response.", 0)
 		return
 	}
 	w.WriteHeader(http.StatusOK)

@@ -18,16 +18,20 @@ FX, this *is* the state's own number). They change only ~1–4×/year on pre-ann
 a fragile scraper for a quarterly event is wasted effort, so v1 fuel is **hand-entered via the
 `manual_override` table** with `effective_from`. Attribution: "Egyptian Ministry of Petroleum / EGPC."
 
-## Ingest cadences
-Weather/AQI: every ~10 min (matches 600s cache). Prayer-times: precompute the day's cities once
-daily. Calendar: pure compute per request (cacheable). Fuel: event-driven (manual).
+## Fetch model (refined during implementation)
+For the **current-read** families (weather, AQI, prayer-times) v1 fetches **on-demand** from the
+upstream and lets the edge cache absorb load (§2.3 "cache at edge, compute rarely") — no cron
+ingesters or per-family tables. The Cache-Control windows do the heavy lifting (weather/AQI 600s;
+prayer today 3600s, past immutable 1y). Outbound requests carry an honest `User-Agent` + contact
+link (§9.6). Calendar is pure local compute. Fuel reads `domain.DefaultFuelPrices`, overridable
+per product via the bootstrap `manual_override` table. Stored, *polled* ingest is reserved for the
+genuinely-aggregated FX/gold families (add-fx-official-and-gold-world).
 
 ## Provenance & attribution (§2.5, §2.11)
-Every stored value records `source` + `fetched_at`; each response's `meta.sources[]` and
-`meta.attribution` name the upstream (Aladhan, Open-Meteo, EGPC). Open-Meteo and Aladhan permit
-commercial redistribution under attribution (§12).
+Each response's `meta.sources[]` and `meta.attribution` name the upstream (Aladhan, Open-Meteo,
+EGPC) with a `fetched_at`. Open-Meteo and Aladhan permit commercial redistribution under
+attribution (§12).
 
-## Tables (per-family, created here)
-`prayer_times` (city, date, method, fajr…isha), `weather_current` (city, fetched_at, fields),
-`aqi_current` (city, fetched_at, aqi + pollutants), `fuel_prices` (product, value, effective_from,
-source). Cities are static; calendar is computed (no table).
+## Tables
+None added in this change. Prayer/weather/AQI are on-demand; cities + calendar are code/compute;
+fuel uses code defaults optionally overridden via the existing `manual_override` table.
