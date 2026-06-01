@@ -5,8 +5,11 @@ import { getFX } from "../../lib/api";
 
 const fx = await getFX();
 const usd = fx?.data?.official?.usd ?? null;
+const parallel = fx?.data?.parallel;
+const hasParallel = !!(parallel && typeof parallel.avg === "number" && parallel.n > 0);
+const parallelRange = hasParallel ? `${parallel.min}–${parallel.max}` : null;
 const answer = usd
-  ? `الدولار النهاردة بـ ${usd.toFixed(2)} جنيه (رسمي). سعر السوق الموازي هييجي قريب.`
+  ? `الدولار النهاردة بـ ${usd.toFixed(2)} جنيه (رسمي).${hasParallel ? ` السوق الموازي: ${parallelRange} جنيه (${parallel.n} مصادر).` : ""}`
   : "السعر مش متاح دلوقتي.";
 
 const jsonLd = {

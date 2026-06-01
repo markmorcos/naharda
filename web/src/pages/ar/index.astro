@@ -6,6 +6,9 @@ import { getFX, getGold, getCalendar } from "../../lib/api";
 
 const [fx, gold, cal] = await Promise.all([getFX(), getGold(), getCalendar()]);
 const usd = fx?.data?.official?.usd ?? null;
+const parallel = fx?.data?.parallel;
+const hasParallel = !!(parallel && typeof parallel.avg === "number" && parallel.n > 0);
+const parallelRange = hasParallel ? `${parallel.min}–${parallel.max}` : null;
 const gold21 =
   gold?.data?.world_derived?.find((g: any) => g.karat === 21)?.value_egp ?? null;
 const hijri = cal?.data?.hijri ?? null;
@@ -34,11 +37,11 @@ const jsonLd = {
       {usd ? usd.toFixed(2) : "—"}
       <span class="muted" style="font-size:var(--step-1)">جنيه</span>
     </p>
-    <p class="muted" style="margin:0">رسمي · السوق الموازي قريب</p>
+    <p class="muted" style="margin:0">رسمي{hasParallel ? ` · الموازي ${parallelRange}` : ""}</p>
   </section>
 
   <section class="grid">
-    <RateCard label="الدولار (رسمي)" value={usd} unit="جنيه" sub="الموازي قريب" href="/ar/usd-to-egp" />
+    <RateCard label="الدولار (رسمي)" value={usd} unit="جنيه" sub={hasParallel ? `الموازي ${parallelRange}` : undefined} href="/ar/usd-to-egp" />
     <RateCard label="ذهب عيار 21" value={gold21} unit="جنيه/جرام" sub="عالمي" />
     <RateCard label="التاريخ الهجري" value={hijri} sub="أم القرى" />
   </section>

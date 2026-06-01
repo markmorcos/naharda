@@ -22,6 +22,9 @@ const [fx, gold, fuel, weather, prayer, cal] = await Promise.all([
 ]);
 
 const usd = fx?.data?.official?.usd ?? null;
+const parallel = fx?.data?.parallel;
+const hasParallel = !!(parallel && typeof parallel.avg === "number" && parallel.n > 0);
+const parallelRange = hasParallel ? `${parallel.min}–${parallel.max}` : null;
 const gold21 =
   gold?.data?.world_derived?.find((g: any) => g.karat === 21)?.value_egp ?? null;
 const gas92 =
@@ -57,12 +60,12 @@ const jsonLd = {
       <span class="muted" style="font-size:var(--step-1)">EGP</span>
     </p>
     <p class="muted" style="margin:0">
-      official · parallel coming soon · updated {updated}
+      official{hasParallel ? ` · parallel ${parallelRange}` : ""} · updated {updated}
     </p>
   </section>
 
   <section class="grid">
-    <RateCard label="USD → EGP (official)" value={usd} unit="EGP" sub="parallel: soon" href="/usd-to-egp" />
+    <RateCard label="USD → EGP (official)" value={usd} unit="EGP" sub={hasParallel ? `parallel ${parallelRange}` : undefined} href="/usd-to-egp" />
     <RateCard label="Gold 21k" value={gold21} unit="EGP/g" sub="world-derived" href="/gold-price-egypt" />
     <RateCard label="Gasoline 92" value={gas92} unit="EGP/L" sub="official (EGPC)" />
     <RateCard label="Weather · Cairo" value={temp} unit="°C" sub="now" />
