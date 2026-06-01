@@ -1,0 +1,61 @@
+name: ci
+
+# Runs on every push (any branch) and PR — guards each commit (project.md §13).
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+jobs:
+  api:
+    name: api (go)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: naharda
+          POSTGRES_PASSWORD: naharda
+          POSTGRES_DB: nahtest
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U naharda"
+          --health-interval 5s --health-timeout 5s --health-retries 12
+    defaults:
+      run:
+        working-directory: api
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.24"
+          cache-dependency-path: api/go.sum
+      - name: gofmt
+        run: |
+          unformatted="$(gofmt -l .)"
+          if [ -n "$unformatted" ]; then echo "::error::gofmt needed:"; echo "$unformatted"; exit 1; fi
+      - name: vet
+        run: go vet ./...
+      - name: build
+        run: go build ./...
+      - name: test (with integration)
+        env:
+          TEST_DATABASE_URL: postgres://naharda:naharda@localhost:5432/nahtest?sslmode=disable
+        run: go test -race -count=1 ./...
+
+  web:
+    name: web (astro)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: npm ci
+      - name: build
+        run: npm run build

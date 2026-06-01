@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"net"
 	"net/http"
 	"strconv"
 	"sync"
@@ -31,7 +32,7 @@ func RateLimit(perMin, perDay int) func(http.Handler) http.Handler {
 	l := &limiter{perMin: perMin, perDay: perDay, ips: make(map[string]*window)}
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if ok, retry := l.allow(r.RemoteAddr); !ok {
+			if ok, retry := l.allow(clientIP(r.RemoteAddr)); !ok {
 				w.Header().Set("Retry-After", strconv.Itoa(retry))
 				respond.Error(w, http.StatusTooManyRequests, "rate_limited", "Rate limit exceeded.", retry)
 				return
@@ -66,6 +67,15 @@ func (l *limiter) allow(ip string) (bool, int) {
 	wd.minCount++
 	wd.dayCount++
 	return true, 0
+}
+
+// clientIP strips the port so the limiter keys on the address, not the
+// per-connection ephemeral port.
+func clientIP(remoteAddr string) string {
+	if host, _, err := net.SplitHostPort(remoteAddr); err == nil {
+		return host
+	}
+	return remoteAddr
 }
 
 func secsUntil(t time.Time) int {
