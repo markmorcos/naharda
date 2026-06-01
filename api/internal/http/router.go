@@ -48,6 +48,10 @@ func NewRouter(cfg config.Config, st *store.Store, logger *slog.Logger) http.Han
 		r.Get("/fx/history", h.FXHistory)
 		r.Get("/gold", h.Gold)
 		r.Get("/gold/history", h.GoldHistory)
+
+		// Dashboard support: email capture + public stats (§10).
+		r.Post("/signups", h.Signups)
+		r.Get("/stats", h.Stats)
 	})
 
 	return r
