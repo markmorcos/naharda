@@ -1,0 +1,62 @@
+# Values for the published infrastructure Helm chart v0.6.0 (project.md §11).
+# Deployment name resolves to naharda-api-deployment in namespace `naharda`.
+name: api
+
+image:
+  repository: ghcr.io/markmorcos/naharda-api
+  tag: latest
+  pullPolicy: IfNotPresent
+
+replicas: 1
+
+containerPort: 8080
+
+env:
+  - name: MODE
+    value: "all"
+  - name: PORT
+    value: "8080"
+  - name: DATABASE_URL
+    valueFrom:
+      secretKeyRef:
+        name: naharda-api
+        key: database-url
+  - name: ALERT_WEBHOOK_URL
+    valueFrom:
+      secretKeyRef:
+        name: naharda-api
+        key: alert-webhook-url
+        optional: true
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 64Mi
+  limits:
+    cpu: 500m
+    memory: 256Mi
+
+startupProbe:
+  httpGet:
+    path: /readyz
+    port: 8080
+  failureThreshold: 30
+  periodSeconds: 2
+
+readinessProbe:
+  httpGet:
+    path: /readyz
+    port: 8080
+  periodSeconds: 10
+
+livenessProbe:
+  httpGet:
+    path: /healthz
+    port: 8080
+  periodSeconds: 15
+
+terminationGracePeriodSeconds: 15
+
+ingress:
+  enabled: true
+  host: api.naharda.com
