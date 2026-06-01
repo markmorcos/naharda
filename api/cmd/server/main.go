@@ -14,6 +14,9 @@ import (
 
 	"github.com/markmorcos/naharda/api/internal/config"
 	httpapi "github.com/markmorcos/naharda/api/internal/http"
+	fxingest "github.com/markmorcos/naharda/api/internal/ingest/fx"
+	goldingest "github.com/markmorcos/naharda/api/internal/ingest/gold"
+	"github.com/markmorcos/naharda/api/internal/quality"
 	"github.com/markmorcos/naharda/api/internal/scheduler"
 	"github.com/markmorcos/naharda/api/internal/store"
 	"github.com/markmorcos/naharda/api/migrations"
@@ -69,9 +72,19 @@ func main() {
 	var sch *scheduler.Scheduler
 	if runIngest {
 		sch = scheduler.New(logger)
-		// No jobs are registered in bootstrap; ingest changes add them here.
+		alerter := quality.NewAlerter(cfg.AlertWebhookURL, logger)
+		runFX := func() { fxingest.Run(context.Background(), st, alerter, logger) }
+		runGold := func() { goldingest.Run(context.Background(), st, alerter, logger) }
+		if err := sch.Register("@every 1h", "fx-official", runFX); err != nil {
+			logger.Error("register fx job", "err", err)
+		}
+		if err := sch.Register("@every 15m", "gold-world", runGold); err != nil {
+			logger.Error("register gold job", "err", err)
+		}
 		sch.Start()
 		logger.Info("scheduler started", "mode", cfg.Mode)
+		// Prime data on startup: FX first, then gold (which depends on USD/EGP).
+		go func() { runFX(); runGold() }()
 	}
 
 	stop := make(chan os.Signal, 1)

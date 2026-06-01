@@ -42,6 +42,12 @@ func NewRouter(cfg config.Config, st *store.Store, logger *slog.Logger) http.Han
 		r.Get("/weather/{city}", h.Weather)
 		r.Get("/aqi/{city}", h.AirQuality)
 		r.Get("/fuel", h.Fuel)
+
+		// FX + gold (official / world-derived; 🟡 fields empty until add-sensitive-sources).
+		r.Get("/fx", h.FX)
+		r.Get("/fx/history", h.FXHistory)
+		r.Get("/gold", h.Gold)
+		r.Get("/gold/history", h.GoldHistory)
 	})
 
 	return r
