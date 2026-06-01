@@ -1,29 +1,31 @@
 name: deploy-api
 
 # Triggers the infrastructure repo's deploy-app workflow for the API service
-# (project.md §11). Add the `deploy-naharda-api` dispatch type there.
+# (project.md §11). The matching `deploy-naharda-api` dispatch type is registered
+# in markmorcos/infrastructure. Payload mirrors the eventlane contract.
 
 on:
+  workflow_dispatch: {}
   push:
     branches: [main]
     paths:
       - "api/**"
       - ".github/workflows/deploy-api.yaml"
-  workflow_dispatch: {}
 
 jobs:
-  dispatch:
+  deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Dispatch deploy-naharda-api
-        uses: peter-evans/repository-dispatch@v3
+      - name: Trigger infrastructure deployment
+        uses: peter-evans/repository-dispatch@v2
         with:
-          token: ${{ secrets.INFRA_DISPATCH_TOKEN }}
+          token: ${{ secrets.INFRASTRUCTURE_PAT }}
           repository: markmorcos/infrastructure
           event-type: deploy-naharda-api
-          client-payload: |
+          client-payload: |-
             {
-              "ref": "${{ github.ref_name }}",
-              "sha": "${{ github.sha }}",
-              "service": "naharda-api"
+              "repository": "markmorcos/naharda",
+              "token": "${{ secrets.DEPLOYMENT_TOKEN }}",
+              "version": "${{ github.sha }}",
+              "config_file": "api/deployment.yaml"
             }
