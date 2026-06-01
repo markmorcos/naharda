@@ -30,5 +30,13 @@ a `meta` flag while `official` / `world_derived` and the rest of the response st
 outlier guard (§9.5) still applies to each aggregated value.
 
 ## Tables
-Extends `fx_rates` (`market='parallel'`, plus the aggregate inputs + per-source rows for `n`/spread)
-and `gold_prices` (`stream='egypt_retail'`). Immutable history; corrections are new rows.
+Reuses `fx_rates` (`market='parallel'`, one immutable row per source/quote) and `gold_prices`
+(`stream='egypt_retail'`). **No new migrations.** The `{min,avg,max,n,sources}` aggregate is computed
+**at read time** from the latest non-pending quote per source within a 1-day window — so honesty
+about uncertainty falls out of the data, and per-source outlier guarding still applies.
+
+## Implementation note
+Concrete scrapers are intentionally **not registered** (`sources.RegisteredParallelSources` /
+`RegisteredRetailGoldSources` are empty) until sign-off (§16 #1); ingest is a no-op until then even
+if the flag is on. Read/aggregate path verified with synthetic rows. Parallel guard uses a wider
+8% threshold (parallel is noisier than official).

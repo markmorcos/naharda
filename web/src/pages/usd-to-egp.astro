@@ -1,0 +1,67 @@
+---
+import Base from "../layouts/Base.astro";
+import EmailCapture from "../components/EmailCapture.astro";
+import { getFX } from "../lib/api";
+
+const fx = await getFX();
+const usd = fx?.data?.official?.usd ?? null;
+const parallel = fx?.data?.parallel;
+const hasParallel = !!(parallel && typeof parallel.avg === "number" && parallel.n > 0);
+const parallelRange = hasParallel ? `${parallel.min}–${parallel.max}` : null;
+const updated = fx?.meta?.cached_at
+  ? new Date(fx.meta.cached_at).toUTCString()
+  : "unavailable";
+const answer = usd
+  ? `The US dollar today is ${usd.toFixed(2)} EGP (official).${hasParallel ? ` Parallel market: ${parallelRange} EGP (${parallel.n} sources).` : ""}`
+  : "Live rate temporarily unavailable.";
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: [
+    {
+      "@type": "Question",
+      name: "How much is the US Dollar in Egypt today?",
+      acceptedAnswer: { "@type": "Answer", text: answer },
+    },
+    {
+      "@type": "Question",
+      name: "Why are there two dollar rates in Egypt?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "The official rate is set/published by the Central Bank of Egypt; the parallel (black-market) rate reflects supply and demand outside official channels and is published as an honest range, never a single number.",
+      },
+    },
+  ],
+};
+---
+
+<Base
+  title="USD to EGP Today — Live Egypt Dollar Rate | Naharda"
+  description="The US dollar to Egyptian pound today: official rate now, parallel-market range, and 30-day history — sourced and available via API."
+  canonicalPath="/usd-to-egp"
+  enPath="/usd-to-egp"
+  arPath="/ar/usd-to-egp"
+  jsonLd={jsonLd}
+>
+  <article style="padding:var(--sp-3) 0">
+    <h1 style="font-size:var(--step-3)">How much is the US Dollar in Egypt today?</h1>
+    <p class="num delta-up" style="font-size:var(--hero);line-height:1;margin:.1em 0">
+      {usd ? usd.toFixed(2) : "—"} <span class="muted" style="font-size:var(--step-1)">EGP</span>
+    </p>
+    <p class="muted">official · updated {updated}</p>
+
+    <h2 style="font-size:var(--step-1);margin-top:var(--sp-4)">Official vs parallel</h2>
+    <p>
+      Egypt has two dollar rates. The <strong>official</strong> rate is published by the Central Bank
+      of Egypt. The <strong>parallel</strong> (black-market) rate trades outside official channels —
+      Naharda publishes it as an honest <em>range</em> with the number of sources, never a fake-precise
+      single value.
+    </p>
+
+    <h2 style="font-size:var(--step-1);margin-top:var(--sp-4)">Get it via API</h2>
+    <pre class="card num" style="overflow:auto"><code>curl https://api.naharda.com/v1/fx</code></pre>
+
+    <div style="margin-top:var(--sp-4)"><EmailCapture lang="en" /></div>
+  </article>
+</Base>

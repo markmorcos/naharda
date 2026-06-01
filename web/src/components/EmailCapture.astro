@@ -1,0 +1,64 @@
+---
+import { API_PUBLIC_BASE } from "../lib/api";
+interface Props {
+  lang?: "en" | "ar";
+}
+const { lang = "en" } = Astro.props;
+const t =
+  lang === "ar"
+    ? {
+        h: "تابع التحديثات",
+        btn: "اشترك",
+        ok: "تمام! وصلنا إيميلك.",
+        consent: "موافق إنكم تتواصلوا معايا",
+        ph: "الإيميل بتاعك",
+      }
+    : {
+        h: "Get updates",
+        btn: "Subscribe",
+        ok: "Thanks — you're in.",
+        consent: "I agree to be contacted",
+        ph: "you@email.com",
+      };
+---
+
+<div class="card" id="capture" data-api={API_PUBLIC_BASE}>
+  <h2 style="font-size:var(--step-1)">{t.h}</h2>
+  <form id="signup" style="display:flex;flex-direction:column;gap:var(--sp-1);max-width:26rem">
+    <input type="email" name="email" required placeholder={t.ph}
+      style="padding:.7em;border-radius:10px;border:1px solid var(--border);background:var(--canvas);color:var(--ink);font:inherit" />
+    <input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true"
+      style="position:absolute;left:-9999px" />
+    <label style="font-size:var(--step--1);display:flex;gap:.5em;align-items:center">
+      <input type="checkbox" name="consent" required /> {t.consent}
+    </label>
+    <button class="btn" type="submit">{t.btn}</button>
+    <p id="msg" class="muted" style="font-size:var(--step--1);min-height:1.2em"></p>
+  </form>
+</div>
+
+<script is:inline define:vars={{ ok: t.ok }}>
+  const form = document.getElementById("signup");
+  form?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const api = document.getElementById("capture").dataset.api;
+    const fd = new FormData(form);
+    const msg = document.getElementById("msg");
+    try {
+      const res = await fetch(api + "/v1/signups", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: fd.get("email"),
+          consent: fd.get("consent") === "on",
+          website: fd.get("website"),
+          locale: document.documentElement.lang,
+        }),
+      });
+      msg.textContent = res.ok ? ok : "Something went wrong.";
+      if (res.ok) form.reset();
+    } catch {
+      msg.textContent = "Network error.";
+    }
+  });
+</script>

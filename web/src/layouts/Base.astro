@@ -1,0 +1,100 @@
+---
+import "@fontsource/ibm-plex-sans/400.css";
+import "@fontsource/ibm-plex-sans/600.css";
+import "@fontsource/ibm-plex-mono/500.css";
+import "@fontsource/ibm-plex-sans-arabic/400.css";
+import "@fontsource/ibm-plex-sans-arabic/600.css";
+import "../styles/tokens.css";
+
+interface Props {
+  title: string;
+  description: string;
+  lang?: "en" | "ar";
+  dir?: "ltr" | "rtl";
+  canonicalPath: string;
+  enPath: string;
+  arPath: string;
+  jsonLd?: unknown;
+}
+const {
+  title,
+  description,
+  lang = "en",
+  dir = "ltr",
+  canonicalPath,
+  enPath,
+  arPath,
+  jsonLd,
+} = Astro.props;
+const site = "https://naharda.com";
+---
+
+<!doctype html>
+<html lang={lang === "ar" ? "ar-EG" : "en"} dir={dir}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={site + canonicalPath} />
+    <link rel="alternate" hreflang="en" href={site + enPath} />
+    <link rel="alternate" hreflang="ar-EG" href={site + arPath} />
+    <link rel="alternate" hreflang="x-default" href={site + enPath} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content={site + canonicalPath} />
+    <meta name="twitter:card" content="summary" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <script is:inline>
+      const t = localStorage.getItem("theme");
+      if (t) document.documentElement.dataset.theme = t;
+    </script>
+    {
+      jsonLd && (
+        <script
+          type="application/ld+json"
+          set:html={JSON.stringify(jsonLd)}
+        />
+      )
+    }
+  </head>
+  <body>
+    <header class="wrap" style="display:flex;align-items:center;justify-content:space-between;padding:var(--sp-3) 0;">
+      <a href={lang === "ar" ? "/ar" : "/"} style="font-weight:600;font-size:var(--step-1);text-decoration:none;color:var(--ink);">
+        naharda<span class="dot pulse" style="margin-inline-start:2px;"></span>
+      </a>
+      <nav style="display:flex;gap:var(--sp-2);align-items:center;font-size:var(--step--1);">
+        <a href="#api">API</a>
+        <a href={lang === "ar" ? enPath : arPath} hreflang={lang === "ar" ? "en" : "ar-EG"}>
+          {lang === "ar" ? "EN" : "ع"}
+        </a>
+        <button id="theme" class="tag" type="button" aria-label="Toggle theme" style="cursor:pointer;background:none;">◐</button>
+      </nav>
+    </header>
+
+    <main class="wrap">
+      <slot />
+    </main>
+
+    <footer class="wrap muted" style="font-size:var(--step--1);padding:var(--sp-4) 0;border-top:1px solid var(--border);margin-top:var(--sp-5);">
+      <p>
+        <strong>Naharda</strong> — what's happening in Egypt today.
+        Data carries source + fetch time; free tier non-commercial.
+        <a href="https://status.naharda.com">Status</a> ·
+        <a href="#api">API</a>
+      </p>
+    </footer>
+
+    <script is:inline>
+      document.getElementById("theme")?.addEventListener("click", () => {
+        const cur =
+          document.documentElement.dataset.theme ||
+          (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+        const next = cur === "dark" ? "light" : "dark";
+        document.documentElement.dataset.theme = next;
+        localStorage.setItem("theme", next);
+      });
+    </script>
+  </body>
+</html>

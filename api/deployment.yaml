@@ -1,0 +1,32 @@
+# Values consumed by the infrastructure Helm chart via scripts/build.sh +
+# scripts/deploy.sh (project.md §11). Schema mirrors eventlane's backend/deployment.yaml.
+# Deployment resolves to naharda-api-deployment in namespace `naharda`.
+version: 0.6.0
+
+namespace: naharda
+project: api
+
+services:
+  - name: api
+    image: ghcr.io/markmorcos/naharda-api
+    context: api
+    port: 8080
+    env:
+      - name: MODE
+        value: "all"
+      - name: PORT
+        value: "8080"
+      - name: DATABASE_URL
+        valueFrom:
+          secretKeyRef:
+            name: naharda-api
+            key: DATABASE_URL
+      - name: ALERT_WEBHOOK_URL
+        valueFrom:
+          secretKeyRef:
+            name: naharda-api
+            key: ALERT_WEBHOOK_URL
+    ingress:
+      host: api.naharda.com
+      path: /?(.*)
+      pathType: ImplementationSpecific

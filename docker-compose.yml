@@ -1,0 +1,58 @@
+# Local dev stack: Postgres + API + dashboard (project.md §7).
+#   docker compose up --build
+#   → dashboard  http://localhost:4321
+#   → API        http://localhost:8080  (e.g. curl http://localhost:8080/v1/fx)
+#   → Postgres   localhost:5432  (user/pass/db: naharda)
+#
+# The API migrates on boot and primes FX→gold ingest from live upstreams.
+
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: naharda
+      POSTGRES_PASSWORD: naharda
+      POSTGRES_DB: naharda
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U naharda -d naharda"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  api:
+    build:
+      context: ./api
+    environment:
+      MODE: all
+      PORT: "8080"
+      DATABASE_URL: postgres://naharda:naharda@postgres:5432/naharda?sslmode=disable
+      SENSITIVE_SOURCES_ENABLED: "false"
+      CORS_ORIGINS: "*"
+      # ALERT_WEBHOOK_URL: ""   # optional data-quality alerts
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  web:
+    build:
+      context: ./web
+    environment:
+      HOST: 0.0.0.0
+      PORT: "8080"
+      # Server-side SSR fetch uses the in-network API service name.
+      API_BASE: http://api:8080
+      # Client-side calls (email capture) use the host-mapped API.
+      PUBLIC_API_BASE: http://localhost:8080
+    ports:
+      - "4321:8080"
+    depends_on:
+      - api
+
+volumes:
+  pgdata:

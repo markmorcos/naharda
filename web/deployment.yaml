@@ -1,0 +1,28 @@
+# Values for the infrastructure Helm chart (project.md §11). Mirrors the
+# {version, namespace, project, services} schema. Resolves to
+# naharda-web-deployment in namespace `naharda`.
+version: 0.6.0
+
+namespace: naharda
+project: web
+
+services:
+  - name: web
+    image: ghcr.io/markmorcos/naharda-web
+    context: web
+    port: 8080
+    env:
+      - name: HOST
+        value: "0.0.0.0"
+      - name: PORT
+        value: "8080"
+      # In-cluster API URL for server-side fetches (adjust to the actual Service name).
+      - name: API_BASE
+        value: "http://naharda-api-deployment:8080"
+      # Public API base used by client-side calls (email capture).
+      - name: PUBLIC_API_BASE
+        value: "https://api.naharda.com"
+    ingress:
+      host: naharda.com
+      path: /?(.*)
+      pathType: ImplementationSpecific
