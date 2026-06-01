@@ -26,6 +26,7 @@ services:
           secretKeyRef:
             name: naharda-api
             key: ALERT_WEBHOOK_URL
+            optional: true   # alerting is optional (§9.5); absent key → logs-only
     ingress:
       host: api.naharda.com
       path: /?(.*)
