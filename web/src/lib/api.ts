@@ -1,7 +1,14 @@
 // Server-side API client. In production this points at the in-cluster service
 // (project.md §5); locally it defaults to the dev API. Every call fails soft —
 // a down endpoint degrades one card, never the page (§2.6).
-const API_BASE = import.meta.env.API_BASE ?? "http://localhost:8080";
+// Resolve bases at RUNTIME (Node SSR) so container env vars actually take
+// effect — Vite would otherwise inline import.meta.env at build time. Order:
+// process.env (runtime) → import.meta.env (build) → default.
+const runtimeEnv = (k: string): string | undefined =>
+  typeof process !== "undefined" ? process.env[k] : undefined;
+
+const API_BASE =
+  runtimeEnv("API_BASE") ?? import.meta.env.API_BASE ?? "http://localhost:8080";
 
 async function get<T = any>(path: string): Promise<T | null> {
   try {
@@ -30,4 +37,6 @@ export const getCalendar = () => get("/v1/calendar");
 export const getStats = () => get("/v1/stats");
 
 export const API_PUBLIC_BASE =
-  import.meta.env.PUBLIC_API_BASE ?? "https://api.naharda.com";
+  runtimeEnv("PUBLIC_API_BASE") ??
+  import.meta.env.PUBLIC_API_BASE ??
+  "https://api.naharda.com";
