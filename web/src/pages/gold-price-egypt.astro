@@ -1,0 +1,55 @@
+---
+import Base from "../layouts/Base.astro";
+import RateCard from "../components/RateCard.astro";
+import { getGold } from "../lib/api";
+
+const gold = await getGold();
+const byKarat = (k: number) =>
+  gold?.data?.world_derived?.find((g: any) => g.karat === k)?.value_egp ?? null;
+const g21 = byKarat(21);
+const updated = gold?.meta?.cached_at
+  ? new Date(gold.meta.cached_at).toUTCString()
+  : "unavailable";
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: [
+    {
+      "@type": "Question",
+      name: "What is the price of 21k gold in Egypt today?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: g21
+          ? `World-derived 21k gold today is about ${g21.toFixed(2)} EGP per gram. Egypt-retail prices add the local masna3eya premium and are tracked separately.`
+          : "Live gold price temporarily unavailable.",
+      },
+    },
+  ],
+};
+---
+
+<Base
+  title="Gold Price in Egypt Today — 21k, 18k, 24k | Naharda"
+  description="Today's gold price in Egypt per gram for 18k, 21k and 24k — world-derived and (soon) Egypt-retail — sourced and available via API."
+  canonicalPath="/gold-price-egypt"
+  enPath="/gold-price-egypt"
+  arPath="/ar/gold-price-egypt"
+  jsonLd={jsonLd}
+>
+  <article style="padding:var(--sp-3) 0">
+    <h1 style="font-size:var(--step-3)">Gold price in Egypt today</h1>
+    <p class="muted">world-derived (spot × FX) · per gram · updated {updated}</p>
+    <div class="grid" style="margin-top:var(--sp-3)">
+      <RateCard label="18 karat" value={byKarat(18)} unit="EGP/g" />
+      <RateCard label="21 karat" value={g21} unit="EGP/g" sub="most common in Egypt" />
+      <RateCard label="24 karat" value={byKarat(24)} unit="EGP/g" />
+    </div>
+    <p style="margin-top:var(--sp-4)">
+      Two gold streams exist and are <strong>never merged</strong>: <em>world-derived</em> (computed
+      from spot gold × the dollar rate) and <em>Egypt-retail</em> (which includes the local
+      "masna3eya" workmanship premium). Retail prices arrive soon.
+    </p>
+    <pre class="card num" style="overflow:auto;margin-top:var(--sp-3)"><code>curl https://api.naharda.com/v1/gold</code></pre>
+  </article>
+</Base>

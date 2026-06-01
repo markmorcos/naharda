@@ -1,0 +1,58 @@
+---
+import Base from "../../layouts/Base.astro";
+import EmailCapture from "../../components/EmailCapture.astro";
+import { getFX } from "../../lib/api";
+
+const fx = await getFX();
+const usd = fx?.data?.official?.usd ?? null;
+const answer = usd
+  ? `الدولار النهاردة بـ ${usd.toFixed(2)} جنيه (رسمي). سعر السوق الموازي هييجي قريب.`
+  : "السعر مش متاح دلوقتي.";
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: [
+    {
+      "@type": "Question",
+      name: "الدولار بكام النهاردة في مصر؟",
+      acceptedAnswer: { "@type": "Answer", text: answer },
+    },
+    {
+      "@type": "Question",
+      name: "ليه في سعرين للدولار في مصر؟",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "السعر الرسمي بيعلنه البنك المركزي المصري، والسعر الموازي (السوق السوداء) بيتحرك حسب العرض والطلب بره القنوات الرسمية — وبننشره كـ مدى صادق مش رقم واحد.",
+      },
+    },
+  ],
+};
+---
+
+<Base
+  title="الدولار بكام النهاردة؟ — سعر الدولار في مصر | Naharda"
+  description="سعر الدولار مقابل الجنيه النهاردة: السعر الرسمي دلوقتي، ومدى السوق الموازي، وتاريخ آخر 30 يوم — من مصادر موثوقة ومتاح كـ API."
+  lang="ar"
+  dir="rtl"
+  canonicalPath="/ar/usd-to-egp"
+  enPath="/usd-to-egp"
+  arPath="/ar/usd-to-egp"
+  jsonLd={jsonLd}
+>
+  <article style="padding:var(--sp-3) 0">
+    <h1 style="font-size:var(--step-3)">الدولار بكام النهاردة؟</h1>
+    <p class="num delta-up" style="font-size:var(--hero);line-height:1;margin:.1em 0">
+      {usd ? usd.toFixed(2) : "—"} <span class="muted" style="font-size:var(--step-1)">جنيه</span>
+    </p>
+    <p class="muted">رسمي</p>
+    <h2 style="font-size:var(--step-1);margin-top:var(--sp-4)">الرسمي والموازي</h2>
+    <p>
+      في مصر سعرين للدولار. <strong>الرسمي</strong> بيعلنه البنك المركزي المصري،
+      و<strong>الموازي</strong> (السوق السوداء) بيتداول بره القنوات الرسمية — وإحنا بننشره
+      كـ <em>مدى</em> صادق مع عدد المصادر، مش رقم واحد مزيّف.
+    </p>
+    <pre class="card num" style="overflow:auto"><code dir="ltr">curl https://api.naharda.com/v1/fx</code></pre>
+    <div style="margin-top:var(--sp-4)"><EmailCapture lang="ar" /></div>
+  </article>
+</Base>

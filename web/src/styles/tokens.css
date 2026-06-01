@@ -1,0 +1,197 @@
+/* Naharda design tokens — Nile base + earned Gold accent (add-dashboard design.md).
+   Every colour carries a job; nothing is decorative. */
+
+:root {
+  /* Brand */
+  --nile-900: #0b2a33;
+  --nile-700: #114b5f;
+  --nile-500: #1b7a8c;
+  --nile-300: #7fb2be;
+  --nile-tint: #e8f0f2;
+  --gold-600: #b8860b;
+  --gold-500: #d4a017;
+  --gold-300: #e8c766;
+  --sand-50: #fbfaf6;
+  --sand-100: #f3f0e9;
+  --up: #1b873f;
+  --down: #c4452f;
+
+  /* Semantic (light, default — mass/mobile/SEO-safe) */
+  --canvas: var(--sand-50);
+  --surface: #ffffff;
+  --ink: #0e1a1f;
+  --muted: #5c6b70;
+  --brand: var(--nile-700);
+  --accent: var(--gold-600);
+  --border: var(--nile-tint);
+
+  /* Type */
+  --font-sans: "IBM Plex Sans", "IBM Plex Sans Arabic", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+  --step--1: clamp(0.83rem, 0.8rem + 0.1vw, 0.9rem);
+  --step-0: clamp(1rem, 0.95rem + 0.2vw, 1.1rem);
+  --step-1: clamp(1.25rem, 1.15rem + 0.4vw, 1.5rem);
+  --step-2: clamp(1.6rem, 1.4rem + 0.9vw, 2.2rem);
+  --step-3: clamp(2.2rem, 1.8rem + 2vw, 3.4rem);
+  --hero: clamp(2.5rem, 1.8rem + 6vw, 6rem);
+
+  /* Space / radius */
+  --sp-1: 0.5rem;
+  --sp-2: 1rem;
+  --sp-3: 1.5rem;
+  --sp-4: 2.5rem;
+  --sp-5: 4rem;
+  --radius: 14px;
+}
+
+:root[data-theme="dark"] {
+  --canvas: var(--nile-900);
+  --surface: #102f39;
+  --ink: #f4f1ea;
+  --muted: #8a9ba0;
+  --brand: var(--nile-300);
+  --accent: var(--gold-500);
+  --border: #143a45;
+  --up: #3fb866;
+  --down: #e0654f;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --canvas: var(--nile-900);
+    --surface: #102f39;
+    --ink: #f4f1ea;
+    --muted: #8a9ba0;
+    --brand: var(--nile-300);
+    --accent: var(--gold-500);
+    --border: #143a45;
+    --up: #3fb866;
+    --down: #e0654f;
+  }
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+html {
+  -webkit-text-size-adjust: 100%;
+}
+body {
+  margin: 0;
+  background: var(--canvas);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: var(--step-0);
+  line-height: 1.6;
+  font-feature-settings: "tnum" 0;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+[dir="rtl"] body {
+  font-size: calc(var(--step-0) + 1px);
+  line-height: 1.8;
+}
+.wrap {
+  width: min(72rem, 100% - 2 * var(--sp-2));
+  margin-inline: auto;
+}
+a {
+  color: var(--brand);
+}
+h1,
+h2,
+h3 {
+  line-height: 1.2;
+  font-weight: 600;
+  margin: 0 0 var(--sp-2);
+}
+.num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+/* Card */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: var(--sp-3);
+}
+.grid {
+  display: grid;
+  gap: var(--sp-2);
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+}
+
+/* Gold dot — the brand's live heartbeat */
+.dot {
+  display: inline-block;
+  width: 0.5em;
+  height: 0.5em;
+  border-radius: 50%;
+  background: var(--accent);
+  vertical-align: middle;
+}
+.dot.pulse {
+  animation: pulse 2.4s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(212, 160, 23, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 0 0.45em rgba(212, 160, 23, 0);
+  }
+}
+
+.btn {
+  display: inline-block;
+  background: var(--accent);
+  color: #1a1300;
+  font-weight: 600;
+  border: 0;
+  border-radius: 10px;
+  padding: 0.7em 1.2em;
+  cursor: pointer;
+  text-decoration: none;
+}
+.muted {
+  color: var(--muted);
+}
+.delta-up {
+  color: var(--up);
+}
+.delta-down {
+  color: var(--down);
+}
+.tag {
+  display: inline-block;
+  font-size: var(--step--1);
+  color: var(--muted);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0.1em 0.7em;
+}
+code {
+  font-family: var(--font-mono);
+  background: var(--nile-tint);
+  color: var(--nile-700);
+  padding: 0.15em 0.4em;
+  border-radius: 6px;
+}
+:root[data-theme="dark"] code {
+  background: #0c2129;
+  color: var(--nile-300);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}

@@ -1,0 +1,49 @@
+---
+import Base from "../../layouts/Base.astro";
+import RateCard from "../../components/RateCard.astro";
+import EmailCapture from "../../components/EmailCapture.astro";
+import { getFX, getGold, getCalendar } from "../../lib/api";
+
+const [fx, gold, cal] = await Promise.all([getFX(), getGold(), getCalendar()]);
+const usd = fx?.data?.official?.usd ?? null;
+const gold21 =
+  gold?.data?.world_derived?.find((g: any) => g.karat === 21)?.value_egp ?? null;
+const hijri = cal?.data?.hijri ?? null;
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  name: "Naharda",
+  url: "https://naharda.com/ar",
+};
+---
+
+<Base
+  title="الدولار بكام النهاردة؟ — أسعار مصر دلوقتي | Naharda"
+  description="كل اللي بيحصل في مصر النهاردة في مكان واحد: الدولار بكام، سعر الذهب، البنزين، مواقيت الصلاة، والطقس — مجانًا ومن مصادر موثوقة، ومتاح كـ API."
+  lang="ar"
+  dir="rtl"
+  canonicalPath="/ar"
+  enPath="/"
+  arPath="/ar"
+  jsonLd={jsonLd}
+>
+  <section style="padding:var(--sp-3) 0 var(--sp-4)">
+    <p class="muted" style="margin:0">الدولار النهاردة</p>
+    <p class="num delta-up" style="font-size:var(--hero);margin:.1em 0;line-height:1">
+      {usd ? usd.toFixed(2) : "—"}
+      <span class="muted" style="font-size:var(--step-1)">جنيه</span>
+    </p>
+    <p class="muted" style="margin:0">رسمي · السوق الموازي قريب</p>
+  </section>
+
+  <section class="grid">
+    <RateCard label="الدولار (رسمي)" value={usd} unit="جنيه" sub="الموازي قريب" href="/ar/usd-to-egp" />
+    <RateCard label="ذهب عيار 21" value={gold21} unit="جنيه/جرام" sub="عالمي" />
+    <RateCard label="التاريخ الهجري" value={hijri} sub="أم القرى" />
+  </section>
+
+  <section style="padding:var(--sp-4) 0">
+    <EmailCapture lang="ar" />
+  </section>
+</Base>

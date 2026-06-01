@@ -1,0 +1,31 @@
+---
+interface Props {
+  label: string;
+  value?: string | number | null;
+  unit?: string;
+  sub?: string;
+  href?: string;
+}
+const { label, value, unit, sub, href } = Astro.props;
+const display =
+  value === null || value === undefined || value === ""
+    ? "—"
+    : typeof value === "number"
+      ? value.toLocaleString(undefined, { maximumFractionDigits: 2 })
+      : value;
+---
+
+<div class="card">
+  <div class="muted" style="font-size:var(--step--1)">{label}</div>
+  <div class="num" style="font-size:var(--step-2);margin:.15em 0">
+    {display}{
+      unit && (
+        <span class="muted" style="font-size:var(--step-0);margin-inline-start:.3em">
+          {unit}
+        </span>
+      )
+    }
+  </div>
+  {sub && <div class="muted" style="font-size:var(--step--1)">{sub}</div>}
+  {href && <a href={href} style="font-size:var(--step--1)">details →</a>}
+</div>

@@ -1,0 +1,30 @@
+name: deploy-web
+
+# Triggers the infrastructure deploy-app workflow for the dashboard (project.md §11).
+# Matching `deploy-naharda-web` dispatch type is registered in markmorcos/infrastructure.
+
+on:
+  workflow_dispatch: {}
+  push:
+    branches: [main]
+    paths:
+      - "web/**"
+      - ".github/workflows/deploy-web.yaml"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger infrastructure deployment
+        uses: peter-evans/repository-dispatch@v2
+        with:
+          token: ${{ secrets.INFRASTRUCTURE_PAT }}
+          repository: markmorcos/infrastructure
+          event-type: deploy-naharda-web
+          client-payload: |-
+            {
+              "repository": "markmorcos/naharda",
+              "token": "${{ secrets.DEPLOYMENT_TOKEN }}",
+              "version": "${{ github.sha }}",
+              "config_file": "web/deployment.yaml"
+            }
