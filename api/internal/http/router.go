@@ -27,7 +27,7 @@ func NewRouter(cfg config.Config, st *store.Store, logger *slog.Logger) http.Han
 	r.Use(mw.RateLimit(cfg.RatePerMinute, cfg.RatePerDay))
 	r.Use(mw.Auth) // reads Bearer; no-op until v2
 
-	h := handlers.New(st)
+	h := handlers.New(st, cfg.SensitiveEnabled)
 
 	// Health/readiness are unversioned and uncached (§9.4).
 	r.Get("/healthz", h.Healthz)

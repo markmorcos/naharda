@@ -9,6 +9,7 @@ import (
 
 	"github.com/markmorcos/naharda/api/internal/domain"
 	"github.com/markmorcos/naharda/api/internal/http/respond"
+	"github.com/markmorcos/naharda/api/internal/store"
 )
 
 // FX returns official EGP rates; the parallel aggregate is present but empty
@@ -29,10 +30,16 @@ func (h *Handlers) FX(w http.ResponseWriter, r *http.Request) {
 		}
 		source = rt.Source
 	}
+	parallel := emptyParallel()
+	if h.sensitiveEnabled {
+		if quotes, err := h.store.LatestParallelQuotes(r.Context(), "USD"); err == nil && len(quotes) > 0 {
+			parallel = aggregateParallel(quotes)
+		}
+	}
 	data := map[string]any{
 		"base":     "EGP",
 		"official": official,
-		"parallel": emptyParallel(),
+		"parallel": parallel,
 	}
 	respond.JSON(w, r, 300, data, domain.Meta{
 		Sources:     oneSource(source, latest),
@@ -73,10 +80,18 @@ func (h *Handlers) Gold(w http.ResponseWriter, r *http.Request) {
 		}
 		source = g.Source
 	}
+	retail := []map[string]any{}
+	if h.sensitiveEnabled {
+		if rows, err := h.store.LatestRetailGold(r.Context()); err == nil {
+			for _, g := range rows {
+				retail = append(retail, map[string]any{"karat": g.Karat, "value_egp": round2(g.ValueEGP)})
+			}
+		}
+	}
 	data := map[string]any{
 		"unit":          "EGP per gram",
 		"world_derived": world,
-		"egypt_retail":  []any{}, // never merged with world_derived (§4)
+		"egypt_retail":  retail, // never merged with world_derived (§4)
 	}
 	respond.JSON(w, r, 600, data, domain.Meta{
 		Sources:     oneSource(source, latest),
@@ -102,6 +117,33 @@ func (h *Handlers) GoldHistory(w http.ResponseWriter, r *http.Request) {
 
 func emptyParallel() map[string]any {
 	return map[string]any{"min": nil, "avg": nil, "max": nil, "n": 0, "sources": []any{}}
+}
+
+// aggregateParallel reduces per-source quotes to {min,avg,max,n,sources} — never
+// a single value (§4, Decision Log: honesty about uncertainty).
+func aggregateParallel(quotes []store.FXRate) map[string]any {
+	if len(quotes) == 0 {
+		return emptyParallel()
+	}
+	min, max, sum := quotes[0].Value, quotes[0].Value, 0.0
+	srcs := make([]string, 0, len(quotes))
+	for _, q := range quotes {
+		if q.Value < min {
+			min = q.Value
+		}
+		if q.Value > max {
+			max = q.Value
+		}
+		sum += q.Value
+		srcs = append(srcs, q.Source)
+	}
+	return map[string]any{
+		"min":     round2(min),
+		"avg":     round2(sum / float64(len(quotes))),
+		"max":     round2(max),
+		"n":       len(quotes),
+		"sources": srcs,
+	}
 }
 
 func oneSource(name string, at time.Time) []domain.Source {

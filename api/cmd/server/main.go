@@ -16,6 +16,7 @@ import (
 	httpapi "github.com/markmorcos/naharda/api/internal/http"
 	fxingest "github.com/markmorcos/naharda/api/internal/ingest/fx"
 	goldingest "github.com/markmorcos/naharda/api/internal/ingest/gold"
+	"github.com/markmorcos/naharda/api/internal/ingest/sensitive"
 	"github.com/markmorcos/naharda/api/internal/quality"
 	"github.com/markmorcos/naharda/api/internal/scheduler"
 	"github.com/markmorcos/naharda/api/internal/store"
@@ -81,10 +82,33 @@ func main() {
 		if err := sch.Register("@every 15m", "gold-world", runGold); err != nil {
 			logger.Error("register gold job", "err", err)
 		}
+		// 🟡 sensitive ingest — only when the flag is on AND sources are registered (§8, §16 #1).
+		var runParallel, runRetail func()
+		if cfg.SensitiveEnabled {
+			runParallel = func() { sensitive.ParallelFXRun(context.Background(), st, alerter, logger) }
+			runRetail = func() { sensitive.RetailGoldRun(context.Background(), st, alerter, logger) }
+			if err := sch.Register("@every 30m", "fx-parallel", runParallel); err != nil {
+				logger.Error("register parallel job", "err", err)
+			}
+			if err := sch.Register("@every 30m", "gold-retail", runRetail); err != nil {
+				logger.Error("register retail job", "err", err)
+			}
+			logger.Warn("sensitive sources ENABLED (🟡 parallel FX + retail gold)")
+		} else {
+			logger.Info("sensitive sources disabled (flag off)")
+		}
+
 		sch.Start()
 		logger.Info("scheduler started", "mode", cfg.Mode)
 		// Prime data on startup: FX first, then gold (which depends on USD/EGP).
-		go func() { runFX(); runGold() }()
+		go func() {
+			runFX()
+			runGold()
+			if runParallel != nil {
+				runParallel()
+				runRetail()
+			}
+		}()
 	}
 
 	stop := make(chan os.Signal, 1)

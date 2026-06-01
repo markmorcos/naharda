@@ -120,6 +120,30 @@ func scanFX(rows pgx.Rows) ([]FXRate, error) {
 	return out, rows.Err()
 }
 
+// LatestParallelQuotes returns the latest non-pending parallel quote per source
+// within the last day — the inputs to the {min,avg,max,n,sources} aggregate (§4).
+func (s *Store) LatestParallelQuotes(ctx context.Context, quote string) ([]FXRate, error) {
+	if s == nil || s.Pool == nil {
+		return nil, errNoDB
+	}
+	rows, err := s.Pool.Query(ctx,
+		`SELECT DISTINCT ON (source) market, quote, value, source, fetched_at
+		   FROM fx_rates
+		   WHERE market='parallel' AND quote=$1 AND pending_review=false
+		     AND fetched_at >= now() - interval '1 day'
+		   ORDER BY source, fetched_at DESC`, quote)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	return scanFX(rows)
+}
+
+// LatestRetailGold returns the latest non-pending egypt_retail price per karat.
+func (s *Store) LatestRetailGold(ctx context.Context) ([]GoldPrice, error) {
+	return s.LatestGoldPrices(ctx, "egypt_retail")
+}
+
 // InsertGoldPrice appends an immutable gold observation.
 func (s *Store) InsertGoldPrice(ctx context.Context, stream string, karat int, valueEGP float64, source string, pending bool) error {
 	if s == nil || s.Pool == nil {

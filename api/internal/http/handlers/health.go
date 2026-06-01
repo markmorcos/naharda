@@ -9,11 +9,14 @@ import (
 
 // Handlers carries shared dependencies for HTTP handlers.
 type Handlers struct {
-	store *store.Store
+	store            *store.Store
+	sensitiveEnabled bool // 🟡 parallel FX / retail gold gate (§8)
 }
 
 // New constructs Handlers.
-func New(st *store.Store) *Handlers { return &Handlers{store: st} }
+func New(st *store.Store, sensitiveEnabled bool) *Handlers {
+	return &Handlers{store: st, sensitiveEnabled: sensitiveEnabled}
+}
 
 // Healthz reports process liveness (§9.4).
 func (h *Handlers) Healthz(w http.ResponseWriter, r *http.Request) {
