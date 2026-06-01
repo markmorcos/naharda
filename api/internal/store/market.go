@@ -39,7 +39,11 @@ func (s *Store) InsertFXRate(ctx context.Context, market, quote string, value fl
 	return err
 }
 
-// TrailingAvgFX returns the average and count of non-pending values within the window.
+// TrailingAvgFX returns the average and count of recent values within the
+// window. It deliberately INCLUDES held (pending_review) rows so that a
+// sustained real move (e.g. an EGP devaluation) pulls the baseline and stops
+// being flagged after a couple of cycles — otherwise the first big value would
+// be held and every subsequent correct value suppressed forever (§9.5).
 func (s *Store) TrailingAvgFX(ctx context.Context, market, quote string, within time.Duration) (float64, int, error) {
 	if s == nil || s.Pool == nil {
 		return 0, 0, errNoDB
@@ -48,8 +52,29 @@ func (s *Store) TrailingAvgFX(ctx context.Context, market, quote string, within 
 	var n int
 	err := s.Pool.QueryRow(ctx,
 		`SELECT avg(value), count(*) FROM fx_rates
-		   WHERE market=$1 AND quote=$2 AND pending_review=false AND fetched_at >= $3`,
+		   WHERE market=$1 AND quote=$2 AND fetched_at >= $3`,
 		market, quote, time.Now().Add(-within)).Scan(&avg, &n)
+	if err != nil {
+		return 0, 0, err
+	}
+	if avg == nil {
+		return 0, 0, nil
+	}
+	return *avg, n, nil
+}
+
+// TrailingAvgGold mirrors TrailingAvgFX for a gold stream/karat (includes held
+// rows so sustained moves self-heal).
+func (s *Store) TrailingAvgGold(ctx context.Context, stream string, karat int, within time.Duration) (float64, int, error) {
+	if s == nil || s.Pool == nil {
+		return 0, 0, errNoDB
+	}
+	var avg *float64
+	var n int
+	err := s.Pool.QueryRow(ctx,
+		`SELECT avg(value_egp), count(*) FROM gold_prices
+		   WHERE stream=$1 AND karat=$2 AND fetched_at >= $3`,
+		stream, karat, time.Now().Add(-within)).Scan(&avg, &n)
 	if err != nil {
 		return 0, 0, err
 	}

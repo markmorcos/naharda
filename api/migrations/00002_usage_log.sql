@@ -11,7 +11,9 @@ CREATE TABLE usage_log (
     PRIMARY KEY (id, created_at)
 ) PARTITION BY RANGE (created_at);
 
--- Default partition; a maintenance job creates daily partitions and prunes >90d.
+-- v1: a single DEFAULT partition holds all rows (the table is partition-ready
+-- for schema-forwardness, but daily-partition creation and 90-day pruning are a
+-- follow-up job, not yet implemented — see add-bootstrap design).
 CREATE TABLE usage_log_default PARTITION OF usage_log DEFAULT;
 
 CREATE INDEX usage_log_created_at_idx ON usage_log (created_at);

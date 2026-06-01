@@ -146,11 +146,16 @@ func aggregateParallel(quotes []store.FXRate) map[string]any {
 	}
 }
 
+var sourceURLs = map[string]string{
+	"exchangerate-api.com": "https://www.exchangerate-api.com",
+	"gold-api.com × FX":    "https://gold-api.com",
+}
+
 func oneSource(name string, at time.Time) []domain.Source {
 	if name == "" {
 		return []domain.Source{}
 	}
-	return []domain.Source{{Name: name, FetchedAt: at}}
+	return []domain.Source{{Name: name, URL: sourceURLs[name], FetchedAt: at}}
 }
 
 func parseLimit(r *http.Request) int {

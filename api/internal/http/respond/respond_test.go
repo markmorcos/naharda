@@ -41,6 +41,26 @@ func TestJSONEnvelopeAndConditional(t *testing.T) {
 	}
 }
 
+func TestETagMatches(t *testing.T) {
+	etag := `"abc123"`
+	cases := []struct {
+		inm  string
+		want bool
+	}{
+		{`"abc123"`, true},
+		{`W/"abc123"`, true},      // weak validator (Cloudflare re-encode)
+		{`"x", W/"abc123"`, true}, // comma list
+		{`*`, true},               // wildcard
+		{`"nope"`, false},
+		{``, false},
+	}
+	for _, c := range cases {
+		if got := etagMatches(c.inm, etag); got != c.want {
+			t.Errorf("etagMatches(%q,%q)=%v want %v", c.inm, etag, got, c.want)
+		}
+	}
+}
+
 func TestError(t *testing.T) {
 	w := httptest.NewRecorder()
 	Error(w, http.StatusTooManyRequests, "rate_limited", "slow down", 30)

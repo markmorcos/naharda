@@ -5,6 +5,7 @@ package gold
 import (
 	"context"
 	"log/slog"
+	"time"
 
 	"github.com/markmorcos/naharda/api/internal/quality"
 	"github.com/markmorcos/naharda/api/internal/sources"
@@ -13,8 +14,10 @@ import (
 
 var karats = []int{18, 21, 24}
 
+const outlierThresholdPct = 5.0
+
 // Run fetches spot gold, combines with the latest USD/EGP, and stores the
-// world-derived EGP-per-gram price for each karat.
+// world-derived EGP-per-gram price for each karat, applying the outlier guard (§9.5).
 func Run(ctx context.Context, st *store.Store, alerter *quality.Alerter, log *slog.Logger) {
 	spotUSD, src, err := sources.FetchSpotGoldUSD(ctx)
 	if err != nil {
@@ -29,7 +32,15 @@ func Run(ctx context.Context, st *store.Store, alerter *quality.Alerter, log *sl
 	usdPerGram := spotUSD / sources.GramsPerTroyOunce
 	for _, k := range karats {
 		egpPerGram := usdPerGram * usdEGP * float64(k) / 24.0
-		if err := st.InsertGoldPrice(ctx, "world_derived", k, egpPerGram, src.Name+" × FX", false); err != nil {
+		pending := false
+		if avg, n, err := st.TrailingAvgGold(ctx, "world_derived", k, time.Hour); err == nil &&
+			n >= 3 && quality.IsOutlier(egpPerGram, avg, outlierThresholdPct) {
+			pending = true
+			alerter.Alert(ctx, "gold world-derived outlier held", map[string]any{
+				"karat": k, "value": egpPerGram, "trailing_avg": avg,
+			})
+		}
+		if err := st.InsertGoldPrice(ctx, "world_derived", k, egpPerGram, src.Name+" × FX", pending); err != nil {
 			log.Warn("gold insert failed", "karat", k, "err", err)
 		}
 	}

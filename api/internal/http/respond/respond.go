@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/markmorcos/naharda/api/internal/domain"
@@ -28,6 +29,20 @@ func JSON(w http.ResponseWriter, r *http.Request, maxAge int, data any, meta dom
 	if meta.Sources == nil {
 		meta.Sources = []domain.Source{}
 	}
+	// Report data age as the gap between cache time and the newest source fetch.
+	if meta.FreshnessSeconds == 0 {
+		var newest time.Time
+		for _, src := range meta.Sources {
+			if src.FetchedAt.After(newest) {
+				newest = src.FetchedAt
+			}
+		}
+		if !newest.IsZero() {
+			if age := int(meta.CachedAt.Sub(newest).Seconds()); age > 0 {
+				meta.FreshnessSeconds = age
+			}
+		}
+	}
 
 	// ETag hashes the DATA payload only — not the volatile meta timestamps
 	// (cached_at / fetched_at) — so it stays stable within the cache window and
@@ -42,7 +57,7 @@ func JSON(w http.ResponseWriter, r *http.Request, maxAge int, data any, meta dom
 	w.Header().Set("Cache-Control", "public, max-age="+strconv.Itoa(maxAge))
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 
-	if match := r.Header.Get("If-None-Match"); match != "" && match == etag {
+	if etagMatches(r.Header.Get("If-None-Match"), etag) {
 		w.WriteHeader(http.StatusNotModified)
 		return
 	}
@@ -68,4 +83,21 @@ func Error(w http.ResponseWriter, status int, code, message string, retryAfter i
 func etagFor(b []byte) string {
 	sum := sha256.Sum256(b)
 	return `"` + hex.EncodeToString(sum[:16]) + `"`
+}
+
+// etagMatches compares If-None-Match against our ETag, tolerating weak
+// validators (W/"...") that proxies like Cloudflare add when re-encoding, and
+// the comma-separated list / "*" forms.
+func etagMatches(ifNoneMatch, etag string) bool {
+	if ifNoneMatch == "" {
+		return false
+	}
+	want := strings.TrimPrefix(etag, "W/")
+	for _, tok := range strings.Split(ifNoneMatch, ",") {
+		tok = strings.TrimSpace(tok)
+		if tok == "*" || strings.TrimPrefix(tok, "W/") == want {
+			return true
+		}
+	}
+	return false
 }

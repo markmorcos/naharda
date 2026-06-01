@@ -39,7 +39,7 @@ func Logging(logger *slog.Logger, st *store.Store) func(http.Handler) http.Handl
 				"dur_ms", time.Since(start).Milliseconds(),
 			)
 
-			go st.LogUsage(endpoint, ipHash, keyHash, ww.Status(), ww.BytesWritten())
+			st.LogUsage(endpoint, ipHash, keyHash, ww.Status(), ww.BytesWritten())
 		})
 	}
 }

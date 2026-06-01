@@ -14,9 +14,16 @@ import (
 	"github.com/pressly/goose/v3"
 )
 
-// Store holds the pgx connection pool.
+// Store holds the pgx connection pool and a bounded usage-log writer.
 type Store struct {
-	Pool *pgxpool.Pool
+	Pool    *pgxpool.Pool
+	usageCh chan usageEntry
+	done    chan struct{}
+}
+
+type usageEntry struct {
+	endpoint, ipHash, keyHash string
+	status, bytes             int
 }
 
 // New creates a Store. An empty DSN yields a Store with no pool (readiness will
@@ -29,7 +36,9 @@ func New(ctx context.Context, dsn string) (*Store, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Store{Pool: pool}, nil
+	s := &Store{Pool: pool, usageCh: make(chan usageEntry, 1024), done: make(chan struct{})}
+	go s.usageWorker()
+	return s, nil
 }
 
 // Ping verifies database reachability (used by /readyz).
@@ -40,27 +49,51 @@ func (s *Store) Ping(ctx context.Context) error {
 	return s.Pool.Ping(ctx)
 }
 
-// Close releases the pool.
+// Close stops the usage worker and releases the pool.
 func (s *Store) Close() {
-	if s != nil && s.Pool != nil {
+	if s == nil {
+		return
+	}
+	if s.done != nil {
+		close(s.done)
+	}
+	if s.Pool != nil {
 		s.Pool.Close()
 	}
 }
 
-// LogUsage best-effort records a request to usage_log (§9.4). Errors are ignored.
+// LogUsage enqueues a usage row for the background writer (§9.4). Non-blocking:
+// if the buffer is full the row is dropped rather than spawning goroutines or
+// blocking the request path.
 func (s *Store) LogUsage(endpoint, ipHash, keyHash string, status, bytes int) {
-	if s == nil || s.Pool == nil {
+	if s == nil || s.usageCh == nil {
 		return
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-	defer cancel()
-	var key any
-	if keyHash != "" {
-		key = keyHash
+	select {
+	case s.usageCh <- usageEntry{endpoint, ipHash, keyHash, status, bytes}:
+	default: // buffer full — drop (usage logging is best-effort)
 	}
-	_, _ = s.Pool.Exec(ctx,
-		`INSERT INTO usage_log (endpoint, ip_hash, key_hash, status, bytes) VALUES ($1,$2,$3,$4,$5)`,
-		endpoint, ipHash, key, status, bytes)
+}
+
+// usageWorker drains the usage channel with a single goroutine and one DB
+// connection's worth of concurrency, until Close signals done.
+func (s *Store) usageWorker() {
+	for {
+		select {
+		case e := <-s.usageCh:
+			ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+			var key any
+			if e.keyHash != "" {
+				key = e.keyHash
+			}
+			_, _ = s.Pool.Exec(ctx,
+				`INSERT INTO usage_log (endpoint, ip_hash, key_hash, status, bytes) VALUES ($1,$2,$3,$4,$5)`,
+				e.endpoint, e.ipHash, key, e.status, e.bytes)
+			cancel()
+		case <-s.done:
+			return
+		}
+	}
 }
 
 // ActiveOverride returns a manually-set value for a family/key if one is in

@@ -1,7 +1,7 @@
 // Server-side API client. In production this points at the in-cluster service
 // (project.md §5); locally it defaults to the dev API. Every call fails soft —
 // a down endpoint degrades one card, never the page (§2.6).
-const API_BASE = import.meta.env.API_BASE ?? "http://localhost:8099";
+const API_BASE = import.meta.env.API_BASE ?? "http://localhost:8080";
 
 async function get<T = any>(path: string): Promise<T | null> {
   try {
@@ -9,9 +9,13 @@ async function get<T = any>(path: string): Promise<T | null> {
       headers: { Accept: "application/json" },
       signal: AbortSignal.timeout(4000),
     });
-    if (!res.ok) return null;
+    if (!res.ok) {
+      console.warn(`[api] ${path} → ${res.status}`);
+      return null;
+    }
     return (await res.json()) as T;
-  } catch {
+  } catch (err) {
+    console.warn(`[api] ${path} fetch failed:`, (err as Error).message);
     return null;
   }
 }

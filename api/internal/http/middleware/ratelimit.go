@@ -19,17 +19,18 @@ type window struct {
 }
 
 type limiter struct {
-	mu     sync.Mutex
-	perMin int
-	perDay int
-	ips    map[string]*window
+	mu        sync.Mutex
+	perMin    int
+	perDay    int
+	ips       map[string]*window
+	lastSweep time.Time
 }
 
 // RateLimit enforces per-IP minute and day budgets (§9.3). In-memory; a single
 // replica in v1. The Authorization header is read elsewhere (Auth) but does not
 // raise limits until v2.
 func RateLimit(perMin, perDay int) func(http.Handler) http.Handler {
-	l := &limiter{perMin: perMin, perDay: perDay, ips: make(map[string]*window)}
+	l := &limiter{perMin: perMin, perDay: perDay, ips: make(map[string]*window), lastSweep: time.Now()}
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			if ok, retry := l.allow(clientIP(r.RemoteAddr)); !ok {
@@ -47,6 +48,16 @@ func (l *limiter) allow(ip string) (bool, int) {
 	defer l.mu.Unlock()
 
 	now := time.Now()
+	// Periodic eviction: drop windows whose day budget lapsed >24h ago so the
+	// map can't grow unbounded on a public endpoint.
+	if now.Sub(l.lastSweep) > time.Hour {
+		for k, w := range l.ips {
+			if now.Sub(w.dayStart) >= 24*time.Hour {
+				delete(l.ips, k)
+			}
+		}
+		l.lastSweep = now
+	}
 	wd := l.ips[ip]
 	if wd == nil {
 		wd = &window{minStart: now, dayStart: now}
