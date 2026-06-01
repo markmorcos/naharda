@@ -16,9 +16,10 @@ services:
         value: "0.0.0.0"
       - name: PORT
         value: "8080"
-      # In-cluster API URL for server-side fetches (adjust to the actual Service name).
+      # In-cluster API URL for server-side fetches — the chart creates the Service
+      # as {namespace}-{name}-service, i.e. naharda-api-service (NOT the deployment).
       - name: API_BASE
-        value: "http://naharda-api-deployment:8080"
+        value: "http://naharda-api-service:8080"
       # Public API base used by client-side calls (email capture).
       - name: PUBLIC_API_BASE
         value: "https://api.naharda.com"
