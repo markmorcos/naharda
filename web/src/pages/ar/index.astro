@@ -66,12 +66,12 @@ const jsonLd = {
   </section>
 
   <section class="grid">
-    <RateCard label="الدولار (رسمي)" value={usd} unit="جنيه" sub={hasParallel ? `الموازي ${parallelRange}` : undefined} href="/ar/usd-to-egp" />
-    <RateCard label="ذهب عيار 21" value={gold21} unit="جنيه/جرام" sub="عالمي" href="/gold-price-egypt" />
-    <RateCard label="بنزين 92" value={gas92} unit="جنيه/لتر" sub="رسمي (هيئة البترول)" href="/fuel-prices-egypt" />
-    <RateCard label="الطقس · القاهرة" value={temp} unit="°م" sub="دلوقتي" href="/weather/cairo" />
-    <RateCard label="الفجر · القاهرة" value={fajr} sub="موعد الصلاة النهاردة" href="/prayer-times/cairo" />
-    <RateCard label="التاريخ الهجري" value={hijri} sub="أم القرى" href="/hijri-date" />
+    <RateCard label="الدولار (رسمي)" value={usd} unit="جنيه" sub={hasParallel ? `الموازي ${parallelRange}` : undefined} href="/ar/usd-to-egp" detailsLabel="تفاصيل ←" />
+    <RateCard label="ذهب عيار 21" value={gold21} unit="جنيه/جرام" sub="عالمي" href="/ar/gold-price-egypt" detailsLabel="تفاصيل ←" />
+    <RateCard label="بنزين 92" value={gas92} unit="جنيه/لتر" sub="رسمي (هيئة البترول)" href="/ar/fuel-prices-egypt" detailsLabel="تفاصيل ←" />
+    <RateCard label="الطقس · القاهرة" value={temp} unit="°م" sub="دلوقتي" href="/ar/weather/cairo" detailsLabel="تفاصيل ←" />
+    <RateCard label="الفجر · القاهرة" value={fajr} sub="موعد الصلاة النهاردة" href="/ar/prayer-times/cairo" detailsLabel="تفاصيل ←" />
+    <RateCard label="التاريخ الهجري" value={hijri} sub="أم القرى" href="/ar/hijri-date" detailsLabel="تفاصيل ←" />
   </section>
 
   <section id="api" style="padding:var(--sp-5) 0 0">

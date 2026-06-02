@@ -1,0 +1,57 @@
+---
+import Base from "../../../layouts/Base.astro";
+import RateCard from "../../../components/RateCard.astro";
+import CitySelect from "../../../components/CitySelect.astro";
+import { getCities, getPrayer } from "../../../lib/api";
+import { cityNameAr, arCities } from "../../../lib/cities-ar";
+
+const { city = "cairo" } = Astro.params;
+const cities: any[] = (await getCities())?.data ?? [];
+const cityObj = cities.find((c: any) => c.slug === city);
+if (cities.length > 0 && !cityObj) return Astro.redirect("/ar/prayer-times/cairo");
+const name = cityNameAr[city] ?? cityObj?.name ?? city;
+
+const pr = await getPrayer(city);
+const t: any = pr?.data?.prayer_times?.timings ?? {};
+const method = pr?.data?.prayer_times?.method ?? "—";
+const order: [string, string][] = [
+  ["Fajr", "الفجر"], ["Sunrise", "الشروق"], ["Dhuhr", "الظهر"],
+  ["Asr", "العصر"], ["Maghrib", "المغرب"], ["Isha", "العشاء"],
+];
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: [
+    {
+      "@type": "Question",
+      name: `الفجر بيأذن الساعة كام في ${name} النهاردة؟`,
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: t.Fajr ? `الفجر في ${name} النهاردة الساعة ${t.Fajr}.` : "المواقيت مش متاحة دلوقتي.",
+      },
+    },
+  ],
+};
+---
+
+<Base
+  title={`مواقيت الصلاة في ${name} النهاردة | Naharda`}
+  description={`مواقيت الصلاة في ${name} النهاردة: الفجر والشروق والظهر والعصر والمغرب والعشاء — عبر Aladhan، ومتاح كـ API.`}
+  lang="ar"
+  dir="rtl"
+  canonicalPath={`/ar/prayer-times/${city}`}
+  enPath={`/prayer-times/${city}`}
+  arPath={`/ar/prayer-times/${city}`}
+  jsonLd={jsonLd}
+>
+  <article style="padding:var(--sp-3) 0">
+    <h1 style="font-size:var(--step-3)">مواقيت الصلاة في {name} النهاردة</h1>
+    <div style="margin:var(--sp-2) 0"><CitySelect cities={arCities(cities)} current={city} base="/ar/prayer-times/" label="المدينة" /></div>
+    <div class="grid">
+      {order.map(([en, ar]) => <RateCard label={ar} value={t[en] ?? "—"} />)}
+    </div>
+    <p class="muted" style="margin-top:var(--sp-3)">الطريقة: {method} · عبر Aladhan</p>
+    <pre class="card num" style="overflow:auto"><code dir="ltr">curl https://api.naharda.com/v1/prayer-times/{city}</code></pre>
+  </article>
+</Base>

@@ -3,3 +3,4 @@ dist/
 .astro/
 .env
 *.log
+.DS_Store
