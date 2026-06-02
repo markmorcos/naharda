@@ -7,7 +7,7 @@ TBD - created by archiving change add-status-and-docs. Update Purpose after arch
 A `/docs` section MUST document every public endpoint with its path, parameters, a working `curl`
 example and a sample JSON response, plus the shared conventions: the `{ data, meta }` envelope, the
 error format, ETag/`304`, the Cache-Control policy, the rate limits, and attribution/free-tier terms.
-It MUST be reachable at `docs.naharda.com` and carry proper title/description/canonical for discovery.
+It MUST be reachable at `naharda.com/docs` (`docs.naharda.com` an optional alias) and carry proper title/description/canonical for discovery.
 
 #### Scenario: A developer reads an endpoint reference
 - **WHEN** a developer opens the docs for a resource (e.g. FX)
