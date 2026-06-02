@@ -39,6 +39,25 @@ func (s *Store) InsertFXRate(ctx context.Context, market, quote string, value fl
 	return err
 }
 
+// SourceThreshold returns the configured outlier_threshold (percent off the
+// trailing average) for a named source and whether a row exists. The ingest
+// uses it to make the per-source guard tunable from the registry (§9.5).
+func (s *Store) SourceThreshold(ctx context.Context, name string) (float64, bool, error) {
+	if s == nil || s.Pool == nil {
+		return 0, false, errNoDB
+	}
+	var th float64
+	err := s.Pool.QueryRow(ctx,
+		`SELECT outlier_threshold FROM sources WHERE name=$1 LIMIT 1`, name).Scan(&th)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return 0, false, nil
+		}
+		return 0, false, err
+	}
+	return th, true, nil
+}
+
 // TrailingAvgFX returns the average and count of recent values within the
 // window. It deliberately INCLUDES held (pending_review) rows so that a
 // sustained real move (e.g. an EGP devaluation) pulls the baseline and stops

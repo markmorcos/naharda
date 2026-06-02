@@ -13,7 +13,10 @@ import (
 	"github.com/markmorcos/naharda/api/internal/store"
 )
 
-const outlierThresholdPct = 8.0 // parallel is noisier than official; wider guard
+// defaultParallelOutlierPct guards a source that has no row in the `sources`
+// registry. Parallel is noisier than official, so the fallback is wider (§9.5);
+// per-source values come from the registry's outlier_threshold.
+const defaultParallelOutlierPct = 8.0
 
 // ParallelFXRun fetches each approved parallel source and stores per-source
 // USD quotes (the FX handler aggregates them into {min,avg,max,n,sources}).
@@ -25,9 +28,13 @@ func ParallelFXRun(ctx context.Context, st *store.Store, alerter *quality.Alerte
 			log.Warn("parallel fx source failed", "source", src.Name(), "err", err)
 			continue // fail-soft: skip this source only
 		}
+		threshold := defaultParallelOutlierPct
+		if th, ok, err := st.SourceThreshold(ctx, src.Name()); err == nil && ok {
+			threshold = th // tunable per source from the registry
+		}
 		pending := false
 		if avg, n, err := st.TrailingAvgFX(ctx, "parallel", "USD", time.Hour); err == nil &&
-			n >= 3 && quality.IsOutlier(val, avg, outlierThresholdPct) {
+			n >= 3 && quality.IsOutlier(val, avg, threshold) {
 			pending = true
 			alerter.Alert(ctx, "parallel fx outlier held", map[string]any{
 				"source": src.Name(), "value": val, "trailing_avg": avg,
