@@ -31,9 +31,17 @@ func (h *Handlers) FX(w http.ResponseWriter, r *http.Request) {
 		source = rt.Source
 	}
 	parallel := emptyParallel()
+	metaSources := oneSource(source, latest)
 	if h.sensitiveEnabled {
 		if quotes, err := h.store.LatestParallelQuotes(r.Context(), "USD"); err == nil && len(quotes) > 0 {
 			parallel = aggregateParallel(quotes)
+			// Name each contributing parallel source in meta with its URL and
+			// fetch time (§2.11 provenance) — the aggregate itself stays a range.
+			for _, q := range quotes {
+				metaSources = append(metaSources, domain.Source{
+					Name: q.Source, URL: sourceURLs[q.Source], FetchedAt: q.FetchedAt,
+				})
+			}
 		}
 	}
 	data := map[string]any{
@@ -42,7 +50,7 @@ func (h *Handlers) FX(w http.ResponseWriter, r *http.Request) {
 		"parallel": parallel,
 	}
 	respond.JSON(w, r, 300, data, domain.Meta{
-		Sources:     oneSource(source, latest),
+		Sources:     metaSources,
 		Attribution: fxAttribution(source),
 	})
 }
@@ -159,6 +167,9 @@ func aggregateParallel(quotes []store.FXRate) map[string]any {
 var sourceURLs = map[string]string{
 	"exchangerate-api.com": "https://www.exchangerate-api.com",
 	"gold-api.com × FX":    "https://gold-api.com",
+	"egcurrency.com":       "https://egcurrency.com/en/currency/usd-to-egp/blackmarket",
+	"blackmarketlive.org":  "https://en.blackmarketlive.org/egp/usd/",
+	"sarfegp.com":          "https://sarfegp.com/en/us-dollar-to-egp-black-market/",
 }
 
 func oneSource(name string, at time.Time) []domain.Source {
