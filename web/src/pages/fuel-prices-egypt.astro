@@ -1,0 +1,54 @@
+---
+import Base from "../layouts/Base.astro";
+import RateCard from "../components/RateCard.astro";
+import { getFuel } from "../lib/api";
+
+const fuel = await getFuel();
+const items: any[] = fuel?.data ?? [];
+const price = (p: string) => items.find((x: any) => x.product === p)?.price_egp ?? null;
+const eff = items[0]?.effective_from
+  ? new Date(items[0].effective_from).toISOString().slice(0, 10)
+  : "unavailable";
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: [
+    {
+      "@type": "Question",
+      name: "How much is gasoline 92 in Egypt today?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: price("gasoline-92")
+          ? `Gasoline 92 is ${price("gasoline-92")} EGP per litre (official EGPC price, effective ${eff}).`
+          : "Live fuel price temporarily unavailable.",
+      },
+    },
+  ],
+};
+---
+
+<Base
+  title="Fuel Prices in Egypt Today — 80, 92, 95, Diesel | Naharda"
+  description="Today's official pump prices in Egypt for gasoline 80, 92, 95 and diesel (EGPC) — per litre, with effective date, and available via API."
+  canonicalPath="/fuel-prices-egypt"
+  enPath="/fuel-prices-egypt"
+  jsonLd={jsonLd}
+>
+  <article style="padding:var(--sp-3) 0">
+    <h1 style="font-size:var(--step-3)">Fuel prices in Egypt today</h1>
+    <p class="muted">official (Ministry of Petroleum / EGPC) · effective {eff}</p>
+    <div class="grid" style="margin-top:var(--sp-3)">
+      <RateCard label="Gasoline 80" value={price("gasoline-80")} unit="EGP/L" />
+      <RateCard label="Gasoline 92" value={price("gasoline-92")} unit="EGP/L" sub="most common" />
+      <RateCard label="Gasoline 95" value={price("gasoline-95")} unit="EGP/L" />
+      <RateCard label="Diesel" value={price("diesel")} unit="EGP/L" />
+    </div>
+    <p style="margin-top:var(--sp-4)">
+      Egyptian pump prices are <strong>set by the government</strong> (the Petroleum Products Pricing
+      Committee / EGPC) and change only a few times a year on announced dates — so each price carries
+      an <em>effective</em> date rather than a live tick.
+    </p>
+    <pre class="card num" style="overflow:auto;margin-top:var(--sp-3)"><code>curl https://api.naharda.com/v1/fuel</code></pre>
+  </article>
+</Base>

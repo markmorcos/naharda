@@ -34,6 +34,7 @@ export const getWeather = (city = "cairo") => get(`/v1/weather/${city}`);
 export const getAQI = (city = "cairo") => get(`/v1/aqi/${city}`);
 export const getPrayer = (city = "cairo") => get(`/v1/prayer-times/${city}`);
 export const getCalendar = () => get("/v1/calendar");
+export const getCities = () => get("/v1/cities");
 export const getStats = () => get("/v1/stats");
 
 export const API_PUBLIC_BASE =

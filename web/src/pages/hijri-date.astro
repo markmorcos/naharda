@@ -1,0 +1,50 @@
+---
+import Base from "../layouts/Base.astro";
+import RateCard from "../components/RateCard.astro";
+import { getCalendar } from "../lib/api";
+
+const cal = await getCalendar();
+const c: any = cal?.data ?? {};
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: [
+    {
+      "@type": "Question",
+      name: "What is today's Hijri date?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: c.hijri
+          ? `Today is ${c.hijri} (${c.hijri_month_name}) in the Hijri (Umm al-Qura) calendar — ${c.gregorian} Gregorian.`
+          : "Hijri date temporarily unavailable.",
+      },
+    },
+  ],
+};
+---
+
+<Base
+  title="Today's Hijri Date (Umm al-Qura) | Naharda"
+  description="Today's Hijri date in the Umm al-Qura calendar, with the Gregorian equivalent and weekday — computed locally and available via API."
+  canonicalPath="/hijri-date"
+  enPath="/hijri-date"
+  jsonLd={jsonLd}
+>
+  <article style="padding:var(--sp-3) 0">
+    <h1 style="font-size:var(--step-3)">Today's Hijri date</h1>
+    <p class="num delta-up" style="font-size:var(--hero);line-height:1;margin:.1em 0">
+      {c.hijri ?? "—"}
+    </p>
+    <p class="muted">{c.hijri_month_name} · {c.weekday}</p>
+    <div class="grid" style="margin-top:var(--sp-3)">
+      <RateCard label="Hijri" value={c.hijri} sub={c.hijri_month_name} />
+      <RateCard label="Gregorian" value={c.gregorian} sub={c.weekday} />
+    </div>
+    <p style="margin-top:var(--sp-4)">
+      Computed locally by Naharda using the <strong>Umm al-Qura</strong> civil Islamic calendar — no
+      external dependency. Add <code>?date=YYYY-MM-DD</code> to the API for any date.
+    </p>
+    <pre class="card num" style="overflow:auto;margin-top:var(--sp-3)"><code>curl https://api.naharda.com/v1/calendar</code></pre>
+  </article>
+</Base>

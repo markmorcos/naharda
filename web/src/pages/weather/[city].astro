@@ -1,0 +1,37 @@
+---
+import Base from "../../layouts/Base.astro";
+import RateCard from "../../components/RateCard.astro";
+import CitySelect from "../../components/CitySelect.astro";
+import { getCities, getWeather, getAQI } from "../../lib/api";
+
+const { city = "cairo" } = Astro.params;
+const cities: any[] = (await getCities())?.data ?? [];
+const cityObj = cities.find((c: any) => c.slug === city);
+// Unknown city → default to Cairo (only when we actually have the list).
+if (cities.length > 0 && !cityObj) return Astro.redirect("/weather/cairo");
+const name = cityObj?.name ?? city;
+
+const [wx, aq] = await Promise.all([getWeather(city), getAQI(city)]);
+const w: any = wx?.data?.weather ?? {};
+const a: any = aq?.data?.aqi ?? {};
+---
+
+<Base
+  title={`Weather in ${name} Now — Temperature & Air Quality | Naharda`}
+  description={`Current weather in ${name}, Egypt: temperature, humidity, wind and US AQI — via Open-Meteo, available as an API.`}
+  canonicalPath={`/weather/${city}`}
+  enPath={`/weather/${city}`}
+>
+  <article style="padding:var(--sp-3) 0">
+    <h1 style="font-size:var(--step-3)">Weather in {name} now</h1>
+    <div style="margin:var(--sp-2) 0"><CitySelect cities={cities} current={city} base="/weather/" /></div>
+    <div class="grid">
+      <RateCard label="Temperature" value={w.temperature_c} unit="°C" />
+      <RateCard label="Humidity" value={w.humidity_pct} unit="%" />
+      <RateCard label="Wind" value={w.wind_speed_kmh} unit="km/h" />
+      <RateCard label="Air quality (US AQI)" value={a.us_aqi} sub="pm2.5 + pollutants" />
+    </div>
+    <p class="muted" style="margin-top:var(--sp-3)">via Open-Meteo · updated every ~10 min</p>
+    <pre class="card num" style="overflow:auto"><code>curl https://api.naharda.com/v1/weather/{city}</code></pre>
+  </article>
+</Base>

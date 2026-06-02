@@ -13,7 +13,7 @@ interface Props {
   dir?: "ltr" | "rtl";
   canonicalPath: string;
   enPath: string;
-  arPath: string;
+  arPath?: string;
   jsonLd?: unknown;
 }
 const {
@@ -38,7 +38,7 @@ const site = "https://naharda.com";
     <meta name="description" content={description} />
     <link rel="canonical" href={site + canonicalPath} />
     <link rel="alternate" hreflang="en" href={site + enPath} />
-    <link rel="alternate" hreflang="ar-EG" href={site + arPath} />
+    {arPath && <link rel="alternate" hreflang="ar-EG" href={site + arPath} />}
     <link rel="alternate" hreflang="x-default" href={site + enPath} />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
@@ -66,7 +66,7 @@ const site = "https://naharda.com";
       </a>
       <nav style="display:flex;gap:var(--sp-2);align-items:center;font-size:var(--step--1);">
         <a href="#api">API</a>
-        <a href={lang === "ar" ? enPath : arPath} hreflang={lang === "ar" ? "en" : "ar-EG"}>
+        <a href={lang === "ar" ? enPath : (arPath ?? "/ar")} hreflang={lang === "ar" ? "en" : "ar-EG"}>
           {lang === "ar" ? "EN" : "ع"}
         </a>
         <button id="theme" class="tag" type="button" aria-label="Toggle theme" style="cursor:pointer;background:none;">◐</button>
