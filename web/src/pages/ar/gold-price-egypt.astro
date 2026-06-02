@@ -1,0 +1,56 @@
+---
+import Base from "../../layouts/Base.astro";
+import RateCard from "../../components/RateCard.astro";
+import { getGold } from "../../lib/api";
+
+const gold = await getGold();
+const byKarat = (k: number) =>
+  gold?.data?.world_derived?.find((g: any) => g.karat === k)?.value_egp ?? null;
+const g21 = byKarat(21);
+const updated = gold?.meta?.cached_at
+  ? new Date(gold.meta.cached_at).toUTCString()
+  : "غير متاح";
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: [
+    {
+      "@type": "Question",
+      name: "سعر جرام الذهب عيار 21 في مصر النهاردة بكام؟",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: g21
+          ? `الذهب عيار 21 العالمي النهاردة حوالي ${g21.toFixed(2)} جنيه للجرام. أسعار السوق المحلي بتزيد المصنعية وبتتحسب لوحدها.`
+          : "السعر مش متاح دلوقتي.",
+      },
+    },
+  ],
+};
+---
+
+<Base
+  title="سعر الذهب في مصر النهاردة — عيار 21، 18، 24 | Naharda"
+  description="سعر جرام الذهب في مصر النهاردة لعيار 18 و21 و24 — عالمي و(قريب) سوق محلي — من مصادر موثوقة ومتاح كـ API."
+  lang="ar"
+  dir="rtl"
+  canonicalPath="/ar/gold-price-egypt"
+  enPath="/gold-price-egypt"
+  arPath="/ar/gold-price-egypt"
+  jsonLd={jsonLd}
+>
+  <article style="padding:var(--sp-3) 0">
+    <h1 style="font-size:var(--step-3)">سعر الذهب في مصر النهاردة</h1>
+    <p class="muted">عالمي (سبوت × الدولار) · للجرام · آخر تحديث {updated}</p>
+    <div class="grid" style="margin-top:var(--sp-3)">
+      <RateCard label="عيار 18" value={byKarat(18)} unit="جنيه/جرام" />
+      <RateCard label="عيار 21" value={g21} unit="جنيه/جرام" sub="الأكثر شيوعًا في مصر" />
+      <RateCard label="عيار 24" value={byKarat(24)} unit="جنيه/جرام" />
+    </div>
+    <p style="margin-top:var(--sp-4)">
+      في ستريمين للذهب <strong>مابيتدمجوش</strong>: <em>العالمي</em> (محسوب من سعر السبوت × الدولار)
+      و<em>السوق المحلي</em> اللي بيضيف المصنعية. أسعار السوق المحلي هتيجي قريب.
+    </p>
+    <pre class="card num" style="overflow:auto;margin-top:var(--sp-3)"><code dir="ltr">curl https://api.naharda.com/v1/gold</code></pre>
+  </article>
+</Base>

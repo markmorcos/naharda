@@ -1,0 +1,56 @@
+---
+import Base from "../../layouts/Base.astro";
+import RateCard from "../../components/RateCard.astro";
+import { getFuel } from "../../lib/api";
+
+const fuel = await getFuel();
+const items: any[] = fuel?.data ?? [];
+const price = (p: string) => items.find((x: any) => x.product === p)?.price_egp ?? null;
+const eff = items[0]?.effective_from
+  ? new Date(items[0].effective_from).toISOString().slice(0, 10)
+  : "غير متاح";
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: [
+    {
+      "@type": "Question",
+      name: "سعر بنزين 92 في مصر النهاردة بكام؟",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: price("gasoline-92")
+          ? `بنزين 92 بـ ${price("gasoline-92")} جنيه للتر (سعر رسمي من هيئة البترول، ساري من ${eff}).`
+          : "السعر مش متاح دلوقتي.",
+      },
+    },
+  ],
+};
+---
+
+<Base
+  title="أسعار البنزين في مصر النهاردة — 80، 92، 95، سولار | Naharda"
+  description="أسعار البنزين الرسمية في مصر النهاردة: بنزين 80 و92 و95 والسولار (هيئة البترول) — للتر، بتاريخ السريان، ومتاح كـ API."
+  lang="ar"
+  dir="rtl"
+  canonicalPath="/ar/fuel-prices-egypt"
+  enPath="/fuel-prices-egypt"
+  arPath="/ar/fuel-prices-egypt"
+  jsonLd={jsonLd}
+>
+  <article style="padding:var(--sp-3) 0">
+    <h1 style="font-size:var(--step-3)">أسعار البنزين في مصر النهاردة</h1>
+    <p class="muted">رسمي (وزارة البترول / هيئة البترول) · ساري من {eff}</p>
+    <div class="grid" style="margin-top:var(--sp-3)">
+      <RateCard label="بنزين 80" value={price("gasoline-80")} unit="جنيه/لتر" />
+      <RateCard label="بنزين 92" value={price("gasoline-92")} unit="جنيه/لتر" sub="الأكثر شيوعًا" />
+      <RateCard label="بنزين 95" value={price("gasoline-95")} unit="جنيه/لتر" />
+      <RateCard label="سولار" value={price("diesel")} unit="جنيه/لتر" />
+    </div>
+    <p style="margin-top:var(--sp-4)">
+      أسعار البنزين في مصر <strong>بتحددها الحكومة</strong> (لجنة تسعير المنتجات البترولية) وبتتغير
+      مرات قليلة في السنة في تواريخ معلنة — عشان كده كل سعر ليه تاريخ <em>سريان</em>.
+    </p>
+    <pre class="card num" style="overflow:auto;margin-top:var(--sp-3)"><code dir="ltr">curl https://api.naharda.com/v1/fuel</code></pre>
+  </article>
+</Base>

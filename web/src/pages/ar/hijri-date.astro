@@ -1,0 +1,64 @@
+---
+import Base from "../../layouts/Base.astro";
+import RateCard from "../../components/RateCard.astro";
+import { getCalendar } from "../../lib/api";
+
+const cal = await getCalendar();
+const c: any = cal?.data ?? {};
+
+const hijriMonthsAr = [
+  "", "محرم", "صفر", "ربيع الأول", "ربيع الآخر", "جمادى الأولى", "جمادى الآخرة",
+  "رجب", "شعبان", "رمضان", "شوال", "ذو القعدة", "ذو الحجة",
+];
+const weekdaysAr: Record<string, string> = {
+  Monday: "الإثنين", Tuesday: "الثلاثاء", Wednesday: "الأربعاء", Thursday: "الخميس",
+  Friday: "الجمعة", Saturday: "السبت", Sunday: "الأحد",
+};
+const monthAr = c.hijri_month ? hijriMonthsAr[c.hijri_month] : "";
+const weekdayAr = weekdaysAr[c.weekday] ?? c.weekday ?? "";
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: [
+    {
+      "@type": "Question",
+      name: "التاريخ الهجري النهاردة إيه؟",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: c.hijri
+          ? `النهاردة ${c.hijri} (${monthAr}) بالتقويم الهجري (أم القرى) — الموافق ${c.gregorian} ميلادي.`
+          : "التاريخ مش متاح دلوقتي.",
+      },
+    },
+  ],
+};
+---
+
+<Base
+  title="التاريخ الهجري النهاردة (أم القرى) | Naharda"
+  description="التاريخ الهجري النهاردة بتقويم أم القرى، مع الموافق الميلادي واليوم — محسوب محليًا ومتاح كـ API."
+  lang="ar"
+  dir="rtl"
+  canonicalPath="/ar/hijri-date"
+  enPath="/hijri-date"
+  arPath="/ar/hijri-date"
+  jsonLd={jsonLd}
+>
+  <article style="padding:var(--sp-3) 0">
+    <h1 style="font-size:var(--step-3)">التاريخ الهجري النهاردة</h1>
+    <p class="num delta-up" style="font-size:var(--hero);line-height:1;margin:.1em 0">
+      {c.hijri ?? "—"}
+    </p>
+    <p class="muted">{monthAr} · {weekdayAr}</p>
+    <div class="grid" style="margin-top:var(--sp-3)">
+      <RateCard label="هجري" value={c.hijri} sub={monthAr} />
+      <RateCard label="ميلادي" value={c.gregorian} sub={weekdayAr} />
+    </div>
+    <p style="margin-top:var(--sp-4)">
+      محسوب محليًا بتقويم <strong>أم القرى</strong> من غير أي مصدر خارجي. ضيف
+      <code dir="ltr">?date=YYYY-MM-DD</code> على الـ API لأي تاريخ.
+    </p>
+    <pre class="card num" style="overflow:auto;margin-top:var(--sp-3)"><code dir="ltr">curl https://api.naharda.com/v1/calendar</code></pre>
+  </article>
+</Base>

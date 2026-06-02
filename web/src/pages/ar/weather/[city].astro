@@ -1,0 +1,40 @@
+---
+import Base from "../../../layouts/Base.astro";
+import RateCard from "../../../components/RateCard.astro";
+import CitySelect from "../../../components/CitySelect.astro";
+import { getCities, getWeather, getAQI } from "../../../lib/api";
+import { cityNameAr, arCities } from "../../../lib/cities-ar";
+
+const { city = "cairo" } = Astro.params;
+const cities: any[] = (await getCities())?.data ?? [];
+const cityObj = cities.find((c: any) => c.slug === city);
+if (cities.length > 0 && !cityObj) return Astro.redirect("/ar/weather/cairo");
+const name = cityNameAr[city] ?? cityObj?.name ?? city;
+
+const [wx, aq] = await Promise.all([getWeather(city), getAQI(city)]);
+const w: any = wx?.data?.weather ?? {};
+const a: any = aq?.data?.aqi ?? {};
+---
+
+<Base
+  title={`الطقس في ${name} دلوقتي — الحرارة وجودة الهواء | Naharda`}
+  description={`الطقس في ${name} دلوقتي: الحرارة والرطوبة والرياح وجودة الهواء — عبر Open-Meteo، ومتاح كـ API.`}
+  lang="ar"
+  dir="rtl"
+  canonicalPath={`/ar/weather/${city}`}
+  enPath={`/weather/${city}`}
+  arPath={`/ar/weather/${city}`}
+>
+  <article style="padding:var(--sp-3) 0">
+    <h1 style="font-size:var(--step-3)">الطقس في {name} دلوقتي</h1>
+    <div style="margin:var(--sp-2) 0"><CitySelect cities={arCities(cities)} current={city} base="/ar/weather/" label="المدينة" /></div>
+    <div class="grid">
+      <RateCard label="الحرارة" value={w.temperature_c} unit="°م" />
+      <RateCard label="الرطوبة" value={w.humidity_pct} unit="%" />
+      <RateCard label="الرياح" value={w.wind_speed_kmh} unit="كم/س" />
+      <RateCard label="جودة الهواء (US AQI)" value={a.us_aqi} sub="pm2.5 + ملوثات" />
+    </div>
+    <p class="muted" style="margin-top:var(--sp-3)">عبر Open-Meteo · بيتحدّث كل ~10 دقايق</p>
+    <pre class="card num" style="overflow:auto"><code dir="ltr">curl https://api.naharda.com/v1/weather/{city}</code></pre>
+  </article>
+</Base>

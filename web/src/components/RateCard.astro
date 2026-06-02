@@ -5,8 +5,9 @@ interface Props {
   unit?: string;
   sub?: string;
   href?: string;
+  detailsLabel?: string;
 }
-const { label, value, unit, sub, href } = Astro.props;
+const { label, value, unit, sub, href, detailsLabel = "details →" } = Astro.props;
 const display =
   value === null || value === undefined || value === ""
     ? "—"
@@ -27,5 +28,5 @@ const display =
     }
   </div>
   {sub && <div class="muted" style="font-size:var(--step--1)">{sub}</div>}
-  {href && <a href={href} style="font-size:var(--step--1)">details →</a>}
+  {href && <a href={href} style="font-size:var(--step--1)">{detailsLabel}</a>}
 </div>
