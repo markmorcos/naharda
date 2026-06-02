@@ -1,0 +1,91 @@
+---
+import Base from "../layouts/Base.astro";
+import Endpoint from "../components/Endpoint.astro";
+
+const B = "https://api.naharda.com";
+const c = (p: string) => `curl ${B}${p}`;
+---
+
+<Base
+  title="API Docs — Naharda (Egypt data API)"
+  description="Naharda API reference: FX, gold, fuel, prayer times, weather, AQI, calendar — endpoints, curl examples, the response envelope, rate limits, and the live SSE stream."
+  canonicalPath="/docs"
+  enPath="/docs"
+>
+  <article style="padding:var(--sp-3) 0;max-width:46rem">
+    <h1 style="font-size:var(--step-3)">Naharda API</h1>
+    <p>
+      A reliable, fairly-priced data API for "what's happening in Egypt right now" — FX, gold, fuel,
+      prayer times, weather, air quality and the Hijri calendar.
+    </p>
+    <ul class="muted">
+      <li><strong>Base URL:</strong> <code>{B}</code></li>
+      <li><strong>Auth:</strong> none in v1 — public, IP rate-limited (60 req/min · 1000 req/day).</li>
+      <li><strong>Format:</strong> JSON only. Free tier is non-commercial.</li>
+    </ul>
+
+    <h2 style="font-size:var(--step-2);margin-top:var(--sp-4)">Conventions</h2>
+
+    <h3 style="font-size:var(--step-1)">Response envelope</h3>
+    <p class="muted">Every success wraps <code>data</code> with a <code>meta</code> block carrying provenance.</p>
+    <pre class="card num" style="overflow:auto"><code>{`{
+  "data": { /* ... */ },
+  "meta": {
+    "tier": "anonymous",
+    "cached_at": "2026-06-02T10:00:00Z",
+    "freshness_seconds": 180,
+    "sources": [ { "name": "...", "url": "...", "fetched_at": "..." } ],
+    "attribution": "Data via Naharda. Free tier non-commercial."
+  }
+}`}</code></pre>
+
+    <h3 style="font-size:var(--step-1)">Errors</h3>
+    <pre class="card num" style="overflow:auto"><code>{`{ "error": { "code": "rate_limited", "message": "...", "retry_after_seconds": 30 } }`}</code></pre>
+
+    <h3 style="font-size:var(--step-1)">Caching</h3>
+    <p class="muted">
+      Every response carries an <code>ETag</code>; send <code>If-None-Match</code> to get a
+      <code>304</code>. <code>Cache-Control</code> max-age per resource:
+    </p>
+    <ul class="muted">
+      <li>FX current 300s · gold/weather/AQI 600s · fuel/calendar 86400s</li>
+      <li>prayer (today) 3600s · history (FX/gold/past prayer) 1 year (immutable)</li>
+      <li><code>/v1/stats</code> 300s · <code>/v1/stream</code> not cached</li>
+    </ul>
+
+    <h2 style="font-size:var(--step-2);margin-top:var(--sp-4)">Endpoints</h2>
+
+    <Endpoint path="/v1/fx" desc="EGP exchange rates. official is populated; parallel is an aggregate range (empty until enabled)." curl={c("/v1/fx")} sample={`{"data":{"base":"EGP","official":{"usd":52.22,"eur":60.86,"sar":13.93,"aed":14.22,"kwd":168.77,"gbp":70.24},"parallel":{"min":null,"avg":null,"max":null,"n":0,"sources":[]}},"meta":{...}}`} />
+
+    <Endpoint path="/v1/fx/history?quote=usd&limit=30" desc="Immutable FX history for a quote." curl={c("/v1/fx/history?quote=usd&limit=30")} sample={`{"data":{"quote":"USD","history":[{"value":52.22,"source":"...","fetched_at":"..."}]},"meta":{...}}`} />
+
+    <Endpoint path="/v1/gold" desc="Gold per gram. world_derived = spot × FX × karat; egypt_retail kept separate (empty until enabled)." curl={c("/v1/gold")} sample={`{"data":{"unit":"EGP per gram","world_derived":[{"karat":18,"value_egp":5646.35},{"karat":21,"value_egp":6587.41},{"karat":24,"value_egp":7528.47}],"egypt_retail":[]},"meta":{...}}`} />
+
+    <Endpoint path="/v1/gold/history?karat=21&limit=30" desc="Immutable gold history for a karat." curl={c("/v1/gold/history?karat=21")} sample={`{"data":{"karat":21,"history":[...]},"meta":{...}}`} />
+
+    <Endpoint path="/v1/fuel" desc="Official pump prices (EGPC): gasoline 80/92/95 + diesel, with effective_from." curl={c("/v1/fuel")} sample={`{"data":[{"product":"gasoline-92","price_egp":13.75,"effective_from":"2025-10-17T00:00:00Z"}],"meta":{...}}`} />
+
+    <Endpoint path="/v1/prayer-times/{city}" desc="Daily salah times by city (Egyptian method). Optional ?date=YYYY-MM-DD; past dates immutable." curl={c("/v1/prayer-times/cairo")} sample={`{"data":{"city":"cairo","prayer_times":{"date":"2026-06-02","method":"Egyptian General Authority of Survey","timings":{"Fajr":"04:11","Dhuhr":"12:53","Asr":"16:29","Maghrib":"19:52","Isha":"21:23"}}},"meta":{...}}`} />
+
+    <Endpoint path="/v1/weather/{city}" desc="Current conditions by city (Open-Meteo)." curl={c("/v1/weather/cairo")} sample={`{"data":{"city":"cairo","weather":{"temperature_c":33.4,"humidity_pct":24,"wind_speed_kmh":9.8,"weather_code":3}},"meta":{...}}`} />
+
+    <Endpoint path="/v1/aqi/{city}" desc="Current air quality by city (US AQI + pollutants)." curl={c("/v1/aqi/cairo")} sample={`{"data":{"city":"cairo","aqi":{"us_aqi":56,"pm10":26.9,"pm2_5":13}},"meta":{...}}`} />
+
+    <Endpoint path="/v1/calendar" desc="Hijri ↔ Gregorian (Umm al-Qura), computed locally. Optional ?date=YYYY-MM-DD." curl={c("/v1/calendar")} sample={`{"data":{"gregorian":"2026-06-02","hijri":"1447-12-16","hijri_month_name":"Dhu al-Hijjah","weekday":"Tuesday"},"meta":{...}}`} />
+
+    <Endpoint path="/v1/cities" desc="The 13 canonical cities with coordinates." curl={c("/v1/cities")} sample={`{"data":[{"slug":"cairo","name":"Cairo","lat":30.0444,"lon":31.2357}],"meta":{...}}`} />
+
+    <Endpoint path="/v1/stats" desc="Public aggregate metrics (PII-free)." curl={c("/v1/stats")} sample={`{"data":{"requests_served_total":1234,"signups_count":12,"fx_data_points":42,"gold_data_points":18,"last_fx_at":"...","last_gold_at":"..."},"meta":{...}}`} />
+
+    <Endpoint method="GET (SSE)" path="/v1/stream" desc="Live updates over Server-Sent Events: a snapshot on connect, then an update event on each change." curl={`curl -N ${B}/v1/stream`} sample={`event: snapshot
+data: {"fx":{"official":{"usd":52.22}},"gold":{"world_derived":[{"karat":21,"value_egp":6587.41}]}}
+
+// JS:  const es = new EventSource("${B}/v1/stream");
+//      es.addEventListener("update", e => console.log(JSON.parse(e.data)));`} />
+
+    <p class="muted" style="margin-top:var(--sp-4)">
+      Status: <a href="/status">naharda.com/status</a>. Attribution is included in every response;
+      please keep it. Free tier is non-commercial.
+    </p>
+  </article>
+</Base>
