@@ -1,0 +1,58 @@
+---
+// Public stats strip (add-dashboard-polish). SSR-fetched from /v1/stats and
+// edge-cached like the page (not a client fetch) — cheap and SEO-visible.
+import { getStats } from "../lib/api";
+
+interface Props {
+  lang?: "en" | "ar";
+}
+const { lang = "en" } = Astro.props;
+const isAr = lang === "ar";
+
+let stats: any = null;
+try {
+  const res = await getStats();
+  stats = res?.data ?? null;
+} catch {
+  // Stats temporarily unavailable — render nothing rather than a broken strip.
+}
+
+const locale = isAr ? "ar-EG-u-nu-latn" : "en-US";
+const fmt = (n: number | null | undefined) =>
+  typeof n === "number" ? n.toLocaleString(locale) : "—";
+
+const dataPoints =
+  stats && typeof stats.fx_data_points === "number"
+    ? (stats.fx_data_points ?? 0) + (stats.gold_data_points ?? 0)
+    : null;
+
+const lastIso = stats?.last_fx_at ?? stats?.last_gold_at ?? null;
+const lastUpdated = lastIso
+  ? new Intl.DateTimeFormat(locale, {
+      timeZone: "Africa/Cairo",
+      day: "numeric",
+      month: "short",
+      hour: "2-digit",
+      minute: "2-digit",
+    }).format(new Date(lastIso))
+  : "—";
+
+const t = isAr
+  ? { served: "طلب اتقدّم", points: "نقطة بيانات", updated: "آخر تحديث" }
+  : { served: "requests served", points: "data points", updated: "last updated" };
+---
+
+{
+  stats && (
+    <div
+      class="muted"
+      style="display:flex;flex-wrap:wrap;gap:var(--sp-1) var(--sp-3);font-size:var(--step--1);margin-top:var(--sp-2)"
+    >
+      <span><strong class="num">{fmt(stats.requests_served_total)}</strong> {t.served}</span>
+      <span aria-hidden="true">·</span>
+      <span><strong class="num">{fmt(dataPoints)}</strong> {t.points}</span>
+      <span aria-hidden="true">·</span>
+      <span>{t.updated} <strong class="num">{lastUpdated}</strong></span>
+    </div>
+  )
+}

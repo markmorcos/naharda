@@ -2,6 +2,7 @@
 import Base from "../../layouts/Base.astro";
 import RateCard from "../../components/RateCard.astro";
 import EmailCapture from "../../components/EmailCapture.astro";
+import StatsStrip from "../../components/StatsStrip.astro";
 import {
   API_PUBLIC_BASE,
   getFX,
@@ -104,6 +105,7 @@ const jsonLd = {
     <p class="muted" style="margin-top:var(--sp-1)">
       <a href="/docs">الـ Docs كاملة ←</a> · <a href="/status">الحالة</a>
     </p>
+    <StatsStrip lang="ar" />
   </section>
 
   <section style="padding:var(--sp-4) 0">
@@ -123,6 +125,24 @@ const jsonLd = {
         void dot.offsetWidth;
         dot.classList.add("pulse");
       }
+      function countUp(el, from, to) {
+        // Animate old→new over ~400ms with rAF; tabular figures keep width
+        // constant (no CLS). Reduced-motion or no rAF → instant swap.
+        if (reduce || typeof requestAnimationFrame !== "function" || !isFinite(from)) {
+          el.textContent = to.toFixed(2);
+          return;
+        }
+        const start = performance.now();
+        const dur = 400;
+        function step(now) {
+          const p = Math.min(1, (now - start) / dur);
+          const eased = 1 - Math.pow(1 - p, 3); // easeOutCubic
+          el.textContent = (from + (to - from) * eased).toFixed(2);
+          if (p < 1) requestAnimationFrame(step);
+          else el.textContent = to.toFixed(2);
+        }
+        requestAnimationFrame(step);
+      }
       function apply(raw) {
         let d;
         try { d = JSON.parse(raw); } catch { return; }
@@ -130,7 +150,10 @@ const jsonLd = {
         const el = document.getElementById("live-usd");
         if (el && typeof usd === "number") {
           const next = usd.toFixed(2);
-          if (el.textContent !== next) { el.textContent = next; pulse(); }
+          if (el.textContent !== next) {
+            countUp(el, parseFloat(el.textContent), usd);
+            pulse();
+          }
         }
       }
       const es = new EventSource(apiBase + "/v1/stream");

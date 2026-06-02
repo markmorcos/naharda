@@ -1,6 +1,35 @@
 /* Naharda design tokens — Nile base + earned Gold accent (add-dashboard design.md).
    Every colour carries a job; nothing is decorative. */
 
+/* Metric-matched fallback faces (add-dashboard-polish): a local system font is
+   forced to IBM Plex's vertical metrics + advance width so the webfont swap
+   shifts nothing (Cumulative Layout Shift = 0). These sit first in the stack so
+   the very first paint already uses Plex-matched metrics. */
+@font-face {
+  font-family: "Plex Sans fallback";
+  src: local("Arial"), local("Helvetica Neue"), local("system-ui");
+  size-adjust: 105%;
+  ascent-override: 102.5%;
+  descent-override: 27.5%;
+  line-gap-override: 0%;
+}
+@font-face {
+  font-family: "Plex Arabic fallback";
+  src: local("Tahoma"), local("Arial"), local("system-ui");
+  size-adjust: 100%;
+  ascent-override: 105%;
+  descent-override: 35%;
+  line-gap-override: 0%;
+}
+@font-face {
+  font-family: "Plex Mono fallback";
+  src: local("Menlo"), local("Consolas"), local("monospace");
+  size-adjust: 99%;
+  ascent-override: 102.5%;
+  descent-override: 27.5%;
+  line-gap-override: 0%;
+}
+
 :root {
   /* Brand */
   --nile-900: #0b2a33;
@@ -26,8 +55,9 @@
   --border: var(--nile-tint);
 
   /* Type */
-  --font-sans: "IBM Plex Sans", "IBM Plex Sans Arabic", system-ui, sans-serif;
-  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+  --font-sans: "IBM Plex Sans", "IBM Plex Sans Arabic", "Plex Sans fallback",
+    "Plex Arabic fallback", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", "Plex Mono fallback", ui-monospace, monospace;
   --step--1: clamp(0.83rem, 0.8rem + 0.1vw, 0.9rem);
   --step-0: clamp(1rem, 0.95rem + 0.2vw, 1.1rem);
   --step-1: clamp(1.25rem, 1.15rem + 0.4vw, 1.5rem);

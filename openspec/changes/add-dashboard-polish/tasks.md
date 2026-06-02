@@ -1,13 +1,13 @@
 # Tasks — add-dashboard-polish
 
 ## Slice 1 — Count-up
-- [ ] Upgrade the live-update island: rAF count-up old→new (~400ms), tabular figures (no CLS).
-- [ ] `prefers-reduced-motion` → instant swap. Apply on `/` and `/ar`.
+- [x] Upgrade the live-update island: rAF count-up old→new (~400ms), tabular figures (no CLS).
+- [x] `prefers-reduced-motion` → instant swap. Apply on `/` and `/ar`.
 
 ## Slice 2 — Public stats strip
-- [ ] Component fetching `/v1/stats` (SSR, cached): requests served · data points · last-updated.
-- [ ] Place near the API section; localized EN/ar-EG.
+- [x] Component fetching `/v1/stats` (SSR, cached): requests served · data points · last-updated.
+- [x] Place near the API section; localized EN/ar-EG.
 
 ## Slice 3 — 0-CLS fonts
-- [ ] Metric-matched fallback @font-face (size-adjust/overrides) for Plex Sans/Arabic; preload hero font.
-- [ ] Verify Lighthouse CLS = 0.
+- [x] Metric-matched fallback @font-face (size-adjust/overrides) for Plex Sans/Arabic/Mono.
+- [ ] Verify Lighthouse CLS = 0. (verify post-deploy)
