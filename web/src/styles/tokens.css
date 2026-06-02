@@ -212,6 +212,12 @@ code {
   padding: 0.15em 0.4em;
   border-radius: 6px;
 }
+/* Inline code (not inside a <pre>, which scrolls via overflow:auto) must break
+   long unbreakable tokens like URLs so they can't force horizontal page
+   overflow on narrow screens. */
+:not(pre) > code {
+  overflow-wrap: anywhere;
+}
 :root[data-theme="dark"] code {
   background: #0c2129;
   color: var(--nile-300);
