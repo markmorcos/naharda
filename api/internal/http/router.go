@@ -52,10 +52,14 @@ func NewRouter(cfg config.Config, st *store.Store, logger *slog.Logger, hub *str
 
 		// Dashboard support: email capture + public stats (§10).
 		r.Post("/signups", h.Signups)
+		r.Delete("/signups", h.DeleteSignup) // GDPR erasure (add-privacy-gdpr)
 		r.Get("/stats", h.Stats)
 
 		// Live updates (SSE) — additive, no-store (add-live-updates).
 		r.Get("/stream", h.Stream)
+
+		// Machine-readable API description (add-openapi).
+		r.Get("/openapi.json", h.OpenAPI)
 	})
 
 	return r

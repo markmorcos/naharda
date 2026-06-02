@@ -1,0 +1,96 @@
+---
+import Base from "../layouts/Base.astro";
+import { API_PUBLIC_BASE } from "../lib/api";
+const updated = "2026-06-02";
+---
+
+<Base
+  title="Privacy Policy — Naharda"
+  description="What Naharda collects (only an email you choose to give), why, how long it's kept, our cookieless stance, and how to delete your data."
+  canonicalPath="/privacy"
+  enPath="/privacy"
+  arPath="/ar/privacy"
+>
+  <article style="padding:var(--sp-3) 0;max-width:46rem" data-api={API_PUBLIC_BASE}>
+    <h1 style="font-size:var(--step-3)">Privacy Policy</h1>
+    <p class="muted">Last updated: {updated}</p>
+
+    <p>
+      Naharda is a public data API and dashboard. We are built to be data-light: we do not use
+      tracking cookies, we do not build advertising profiles, and the only personal data we ever
+      store is an email address you deliberately give us.
+    </p>
+
+    <h2 style="font-size:var(--step-1);margin-top:var(--sp-4)">What we collect</h2>
+    <ul>
+      <li>
+        <strong>If you subscribe:</strong> your <strong>email address</strong>, a
+        <strong>consent</strong> flag, your interface <strong>locale</strong> (en/ar), and a
+        <strong>timestamp</strong>. Nothing else.
+      </li>
+      <li>
+        <strong>Operational logs:</strong> request metadata (endpoint, status, a one-way hashed
+        IP — never the raw IP) kept briefly to run and protect the service. These are not used to
+        identify you and are pruned within 90 days.
+      </li>
+      <li><strong>No cookies</strong> for tracking; analytics, where used, are cookieless and aggregate.</li>
+    </ul>
+
+    <h2 style="font-size:var(--step-1);margin-top:var(--sp-4)">Why &amp; lawful basis</h2>
+    <p>
+      We store your email only to send you product updates you asked for. The lawful basis is your
+      <strong>consent</strong>, which you can withdraw at any time by deleting your data (below).
+    </p>
+
+    <h2 style="font-size:var(--step-1);margin-top:var(--sp-4)">Retention</h2>
+    <p>
+      Your email is kept until you delete it or ask us to. Operational logs are kept for at most 90
+      days.
+    </p>
+
+    <h2 style="font-size:var(--step-1);margin-top:var(--sp-4)">Third parties</h2>
+    <p>
+      Our data comes from public upstream providers (e.g. Open-Meteo, Aladhan, exchange-rate
+      sources). These are sources of <em>data</em> — we do not share your personal data with them.
+    </p>
+
+    <h2 style="font-size:var(--step-1);margin-top:var(--sp-4)">Delete your data</h2>
+    <p>
+      Enter your email to remove it from our list immediately. For your privacy, the result is the
+      same whether or not the address was on file.
+    </p>
+    <form id="erase" style="display:flex;flex-direction:column;gap:var(--sp-1);max-width:26rem">
+      <input type="email" name="email" required placeholder="you@email.com"
+        style="padding:.7em;border-radius:10px;border:1px solid var(--border);background:var(--canvas);color:var(--ink);font:inherit" />
+      <button class="btn" type="submit">Delete my email</button>
+      <p id="erase-msg" class="muted" style="font-size:var(--step--1);min-height:1.2em"></p>
+    </form>
+    <p class="muted" style="margin-top:var(--sp-2)">
+      Prefer email? Write to <a href="mailto:privacy@naharda.com">privacy@naharda.com</a> and we'll
+      action your request within the statutory window.
+    </p>
+  </article>
+
+  <script is:inline>
+    const f = document.getElementById("erase");
+    f?.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const api = document.querySelector("[data-api]").dataset.api;
+      const msg = document.getElementById("erase-msg");
+      const email = new FormData(f).get("email");
+      try {
+        const res = await fetch(api + "/v1/signups", {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email }),
+        });
+        msg.textContent = res.ok
+          ? "Done — if that email was on our list, it's now removed."
+          : "Something went wrong. Email privacy@naharda.com.";
+        if (res.ok) f.reset();
+      } catch {
+        msg.textContent = "Network error. Email privacy@naharda.com.";
+      }
+    });
+  </script>
+</Base>

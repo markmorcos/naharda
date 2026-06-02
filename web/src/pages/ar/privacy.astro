@@ -1,0 +1,95 @@
+---
+import Base from "../../layouts/Base.astro";
+import { API_PUBLIC_BASE } from "../../lib/api";
+const updated = "2026-06-02";
+---
+
+<Base
+  title="سياسة الخصوصية — نهاردة"
+  description="إيه اللي نهاردة بتجمعه (بس الإيميل اللي إنت بتديه لينا)، وليه، وبيفضل قد إيه، وإننا من غير كوكيز، وإزاي تمسح بياناتك."
+  lang="ar"
+  dir="rtl"
+  canonicalPath="/ar/privacy"
+  enPath="/privacy"
+  arPath="/ar/privacy"
+>
+  <article style="padding:var(--sp-3) 0;max-width:46rem" data-api={API_PUBLIC_BASE}>
+    <h1 style="font-size:var(--step-3)">سياسة الخصوصية</h1>
+    <p class="muted">آخر تحديث: {updated}</p>
+
+    <p>
+      نهاردة عبارة عن API عام ولوحة بيانات. إحنا متبنيين إننا نجمع أقل بيانات ممكنة: مفيش كوكيز
+      للتتبّع، ومفيش ملفات إعلانية، والبيانات الشخصية الوحيدة اللي بنخزّنها هي الإيميل اللي إنت
+      بتختار تديهولنا.
+    </p>
+
+    <h2 style="font-size:var(--step-1);margin-top:var(--sp-4)">بنجمع إيه</h2>
+    <ul>
+      <li>
+        <strong>لو اشتركت:</strong> <strong>الإيميل بتاعك</strong>، وعلامة
+        <strong>موافقة</strong>، و<strong>لغة</strong> الواجهة (عربي/إنجليزي)، و<strong>وقت</strong>
+        التسجيل. مفيش حاجة تانية.
+      </li>
+      <li>
+        <strong>سجلات تشغيلية:</strong> بيانات عن الطلبات (الـ endpoint، الحالة، وIP متشفّر باتجاه
+        واحد — مش الـ IP الأصلي أبداً) بنحتفظ بيها لفترة قصيرة عشان نشغّل الخدمة ونحميها، وبتتمسح في
+        خلال 90 يوم.
+      </li>
+      <li><strong>مفيش كوكيز</strong> للتتبّع؛ والتحليلات — لو استُخدمت — من غير كوكيز وإجمالية.</li>
+    </ul>
+
+    <h2 style="font-size:var(--step-1);margin-top:var(--sp-4)">ليه والأساس القانوني</h2>
+    <p>
+      بنخزّن إيميلك بس عشان نبعتلك تحديثات المنتج اللي إنت طلبتها. الأساس القانوني هو
+      <strong>موافقتك</strong>، وتقدر تسحبها في أي وقت إنك تمسح بياناتك (تحت).
+    </p>
+
+    <h2 style="font-size:var(--step-1);margin-top:var(--sp-4)">مدة الاحتفاظ</h2>
+    <p>إيميلك بيفضل لحد ما تمسحه أو تطلب مننا نمسحه. السجلات التشغيلية بتفضل 90 يوم كحد أقصى.</p>
+
+    <h2 style="font-size:var(--step-1);margin-top:var(--sp-4)">أطراف تانية</h2>
+    <p>
+      بياناتنا بتيجي من مصادر عامة (زي Open-Meteo وAladhan ومصادر أسعار الصرف). دول مصادر
+      <em>بيانات</em> — إحنا مابنشاركش بياناتك الشخصية معاهم.
+    </p>
+
+    <h2 style="font-size:var(--step-1);margin-top:var(--sp-4)">امسح بياناتك</h2>
+    <p>
+      اكتب إيميلك عشان نشيله من القايمة على طول. لحماية خصوصيتك، النتيجة واحدة سواء كان الإيميل
+      مسجّل عندنا أو لأ.
+    </p>
+    <form id="erase" style="display:flex;flex-direction:column;gap:var(--sp-1);max-width:26rem">
+      <input type="email" name="email" required placeholder="you@email.com"
+        style="padding:.7em;border-radius:10px;border:1px solid var(--border);background:var(--canvas);color:var(--ink);font:inherit" />
+      <button class="btn" type="submit">امسح إيميلي</button>
+      <p id="erase-msg" class="muted" style="font-size:var(--step--1);min-height:1.2em"></p>
+    </form>
+    <p class="muted" style="margin-top:var(--sp-2)">
+      تفضّل الإيميل؟ ابعتلنا على <a href="mailto:privacy@naharda.com">privacy@naharda.com</a> وهننفّذ
+      طلبك في المدة القانونية.
+    </p>
+  </article>
+
+  <script is:inline>
+    const f = document.getElementById("erase");
+    f?.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const api = document.querySelector("[data-api]").dataset.api;
+      const msg = document.getElementById("erase-msg");
+      const email = new FormData(f).get("email");
+      try {
+        const res = await fetch(api + "/v1/signups", {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email }),
+        });
+        msg.textContent = res.ok
+          ? "تمام — لو الإيميل ده كان مسجّل، اتشال دلوقتي."
+          : "حصل خطأ. ابعتلنا على privacy@naharda.com.";
+        if (res.ok) f.reset();
+      } catch {
+        msg.textContent = "خطأ في الشبكة. ابعتلنا على privacy@naharda.com.";
+      }
+    });
+  </script>
+</Base>

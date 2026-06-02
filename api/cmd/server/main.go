@@ -84,21 +84,31 @@ func main() {
 		alerter := quality.NewAlerter(cfg.AlertWebhookURL, cfg.TelegramBotToken, cfg.TelegramChatID, logger)
 		runFX := func() { fxingest.Run(context.Background(), st, alerter, logger) }
 		runGold := func() { goldingest.Run(context.Background(), st, alerter, logger) }
-		if err := sch.Register("@every 1h", "fx-official", runFX); err != nil {
+		if err := sch.Register(cfg.FXInterval, "fx-official", runFX); err != nil {
 			logger.Error("register fx job", "err", err)
 		}
-		if err := sch.Register("@every 15m", "gold-world", runGold); err != nil {
+		if err := sch.Register(cfg.GoldInterval, "gold-world", runGold); err != nil {
 			logger.Error("register gold job", "err", err)
+		}
+		// Daily usage_log partition maintenance: ensure dated partitions ahead of
+		// time and prune partitions older than the 90-day retention (§9.4).
+		runMaint := func() {
+			if err := st.MaintainUsageLog(context.Background()); err != nil {
+				logger.Error("usage_log maintenance", "err", err)
+			}
+		}
+		if err := sch.Register("@daily", "usage-log-maintenance", runMaint); err != nil {
+			logger.Error("register maintenance job", "err", err)
 		}
 		// 🟡 sensitive ingest — only when the flag is on AND sources are registered (§8, §16 #1).
 		var runParallel, runRetail func()
 		if cfg.SensitiveEnabled {
 			runParallel = func() { sensitive.ParallelFXRun(context.Background(), st, alerter, logger) }
 			runRetail = func() { sensitive.RetailGoldRun(context.Background(), st, alerter, logger) }
-			if err := sch.Register("@every 30m", "fx-parallel", runParallel); err != nil {
+			if err := sch.Register(cfg.SensitiveInterval, "fx-parallel", runParallel); err != nil {
 				logger.Error("register parallel job", "err", err)
 			}
-			if err := sch.Register("@every 30m", "gold-retail", runRetail); err != nil {
+			if err := sch.Register(cfg.SensitiveInterval, "gold-retail", runRetail); err != nil {
 				logger.Error("register retail job", "err", err)
 			}
 			logger.Warn("sensitive sources ENABLED (🟡 parallel FX + retail gold)")
@@ -110,6 +120,7 @@ func main() {
 		logger.Info("scheduler started", "mode", cfg.Mode)
 		// Prime data on startup: FX first, then gold (which depends on USD/EGP).
 		go func() {
+			runMaint() // ensure partitions exist before first inserts
 			runFX()
 			runGold()
 			if runParallel != nil {

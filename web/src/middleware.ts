@@ -6,8 +6,9 @@ import type { MiddlewareHandler } from "astro";
 // by setting their own Cache-Control (e.g. /status uses max-age=60). Requires a
 // Cloudflare Cache Rule ("Cache Everything" / eligible) for HTML to be honored.
 
-// Rarely-changing pages: docs, the hijri date, fuel prices (quarterly).
-const LONG_LIVED = /^\/(docs|hijri-date|fuel-prices-egypt)\/?$/;
+// Rarely-changing pages: docs, the hijri date, fuel prices (quarterly), privacy.
+const LONG_LIVED =
+  /^\/(ar\/)?(docs|docs\/reference|hijri-date|fuel-prices-egypt|privacy)\/?$/;
 
 export const onRequest: MiddlewareHandler = async (context, next) => {
   const res = await next();

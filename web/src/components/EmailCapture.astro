@@ -4,22 +4,25 @@ interface Props {
   lang?: "en" | "ar";
 }
 const { lang = "en" } = Astro.props;
-const t =
-  lang === "ar"
-    ? {
-        h: "تابع التحديثات",
-        btn: "اشترك",
-        ok: "تمام! وصلنا إيميلك.",
-        consent: "موافق إنكم تتواصلوا معايا",
-        ph: "الإيميل بتاعك",
-      }
-    : {
-        h: "Get updates",
-        btn: "Subscribe",
-        ok: "Thanks — you're in.",
-        consent: "I agree to be contacted",
-        ph: "you@email.com",
-      };
+const isAr = lang === "ar";
+const privacyHref = isAr ? "/ar/privacy" : "/privacy";
+const t = isAr
+  ? {
+      h: "تابع التحديثات",
+      btn: "اشترك",
+      ok: "تمام! وصلنا إيميلك.",
+      consent: "موافق إنكم تتواصلوا معايا — اطّلع على",
+      privacy: "سياسة الخصوصية",
+      ph: "الإيميل بتاعك",
+    }
+  : {
+      h: "Get updates",
+      btn: "Subscribe",
+      ok: "Thanks — you're in.",
+      consent: "I agree to be contacted — see the",
+      privacy: "privacy policy",
+      ph: "you@email.com",
+    };
 ---
 
 <div class="card" id="capture" data-api={API_PUBLIC_BASE}>
@@ -30,9 +33,10 @@ const t =
     <input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true"
       style="position:absolute;left:-9999px" />
     <label style="font-size:var(--step--1);display:flex;gap:.5em;align-items:center">
-      <input type="checkbox" name="consent" required /> {t.consent}
+      <input type="checkbox" name="consent" required />
+      <span>{t.consent} <a href={privacyHref}>{t.privacy}</a>.</span>
     </label>
-    <button class="btn" type="submit">{t.btn}</button>
+    <button class="btn" type="submit" data-umami-event="subscribe">{t.btn}</button>
     <p id="msg" class="muted" style="font-size:var(--step--1);min-height:1.2em"></p>
   </form>
 </div>

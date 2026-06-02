@@ -1,0 +1,42 @@
+# Values for the infrastructure Helm chart (project.md §11) — self-hosted Umami
+# (add-analytics). Resolves to naharda-analytics-deployment in namespace `naharda`,
+# fronted by Cloudflare at analytics.naharda.com.
+#
+# Umami is cookieless and stores no raw IPs (it hashes IP+UA+salt for unique
+# counts), so no consent banner is required (§3/§12).
+#
+# Required secret (create with scripts/create-secrets.sh or kubectl):
+#   kubectl -n naharda create secret generic naharda-analytics \
+#     --from-literal=DATABASE_URL='postgres://umami:...@m720q:5432/umami' \
+#     --from-literal=APP_SECRET='<openssl rand -hex 32>'
+# DATABASE_URL must point at a dedicated `umami` database (own schema), NOT the
+# Naharda API database.
+version: 0.1.0
+
+namespace: naharda
+project: analytics
+
+services:
+  - name: analytics
+    # Official Umami image (Postgres flavor). Pinned by digest/tag at deploy.
+    image: ghcr.io/umami-software/umami
+    tag: postgresql-latest
+    context: analytics
+    port: 3000
+    env:
+      - name: DATABASE_TYPE
+        value: "postgresql"
+      - name: DATABASE_URL
+        valueFrom:
+          secretKeyRef:
+            name: naharda-analytics
+            key: DATABASE_URL
+      - name: APP_SECRET
+        valueFrom:
+          secretKeyRef:
+            name: naharda-analytics
+            key: APP_SECRET
+    ingress:
+      host: analytics.naharda.com
+      path: /?(.*)
+      pathType: ImplementationSpecific

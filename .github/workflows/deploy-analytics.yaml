@@ -1,0 +1,31 @@
+name: deploy-analytics
+
+# Triggers the infrastructure deploy-app workflow for self-hosted Umami
+# (add-analytics). Matching `deploy-naharda-analytics` dispatch type must be
+# registered in markmorcos/infrastructure.
+
+on:
+  workflow_dispatch: {}
+  push:
+    branches: [main]
+    paths:
+      - "analytics/**"
+      - ".github/workflows/deploy-analytics.yaml"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger infrastructure deployment
+        uses: peter-evans/repository-dispatch@v2
+        with:
+          token: ${{ secrets.INFRASTRUCTURE_PAT }}
+          repository: markmorcos/infrastructure
+          event-type: deploy-naharda-analytics
+          client-payload: |-
+            {
+              "repository": "markmorcos/naharda",
+              "token": "${{ secrets.DEPLOYMENT_TOKEN }}",
+              "version": "${{ github.sha }}",
+              "config_file": "analytics/deployment.yaml"
+            }
