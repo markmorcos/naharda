@@ -81,7 +81,7 @@ func main() {
 	var sch *scheduler.Scheduler
 	if runIngest {
 		sch = scheduler.New(logger)
-		alerter := quality.NewAlerter(cfg.AlertWebhookURL, logger)
+		alerter := quality.NewAlerter(cfg.AlertWebhookURL, cfg.TelegramBotToken, cfg.TelegramChatID, logger)
 		runFX := func() { fxingest.Run(context.Background(), st, alerter, logger) }
 		runGold := func() { goldingest.Run(context.Background(), st, alerter, logger) }
 		if err := sch.Register("@every 1h", "fx-official", runFX); err != nil {

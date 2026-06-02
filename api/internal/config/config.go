@@ -20,6 +20,8 @@ type Config struct {
 	CORSOrigins      []string // allowed CORS origins ("*" = all)
 	SensitiveEnabled bool     // 🟡 parallel FX / retail gold gate (§8, §16 #1) — default false
 	StreamMaxConns   int      // max concurrent SSE connections per instance (add-live-updates)
+	TelegramBotToken string   // optional Telegram alert bot token (add-telegram-alerts)
+	TelegramChatID   string   // optional Telegram alert chat id
 }
 
 // Load reads configuration from the environment and validates it.
@@ -34,6 +36,8 @@ func Load() (Config, error) {
 		CORSOrigins:      splitCSV(getenv("CORS_ORIGINS", "*")),
 		SensitiveEnabled: getenvBool("SENSITIVE_SOURCES_ENABLED", false),
 		StreamMaxConns:   getenvInt("STREAM_MAX_CONNS", 500),
+		TelegramBotToken: os.Getenv("TELEGRAM_BOT_TOKEN"),
+		TelegramChatID:   os.Getenv("TELEGRAM_CHAT_ID"),
 	}
 	switch c.Mode {
 	case "api", "ingest", "all":

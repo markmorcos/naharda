@@ -27,6 +27,18 @@ services:
             name: naharda-api
             key: ALERT_WEBHOOK_URL
             optional: true   # alerting is optional (§9.5); absent key → logs-only
+      - name: TELEGRAM_BOT_TOKEN
+        valueFrom:
+          secretKeyRef:
+            name: naharda-api
+            key: TELEGRAM_BOT_TOKEN
+            optional: true
+      - name: TELEGRAM_CHAT_ID
+        valueFrom:
+          secretKeyRef:
+            name: naharda-api
+            key: TELEGRAM_CHAT_ID
+            optional: true
     ingress:
       host: api.naharda.com
       path: /?(.*)
