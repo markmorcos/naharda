@@ -77,7 +77,11 @@ No markup/SEO impact.
 ## Schema
 No new tables. Reuses `fx_rates`/`gold_prices` (read for snapshots) and Postgres NOTIFY (no storage).
 
+## Decisions
+1. **Transport: SSE** ✅ — one-way server→client push over plain HTTP, built-in reconnect, proxies
+   cleanly through nginx+Cloudflare, far lighter than WS. WebSocket (full-duplex we'd never use) and
+   poll-only (kept as the free-tier fallback) rejected for the live feature.
+
 ## Open decisions (for the human)
-1. **Transport**: SSE (recommended) vs WebSocket (requested) vs poll-`/v1/today` (lightest).
 2. Push the value inline vs a "changed" nudge (client re-fetches the cached endpoint).
 3. Gate behind a tier now, or leave open in v1.

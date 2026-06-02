@@ -1,9 +1,11 @@
 # Tasks — add-live-updates
 
-Vertical slices. Transport assumed **SSE** per design.md (swap only the handler for WebSocket if chosen).
+Vertical slices. **Transport decided: SSE** (one-way push, plain HTTP, built-in reconnect, lightest
+fit with §2.3/§5). WebSocket/poll-only rejected for the live feature (see design.md).
 
 ## Slice 0 — Decide transport (quick gate)
-- [ ] Confirm SSE vs WebSocket vs poll-only (design.md "Open decisions"); record the call.
+- [x] Transport chosen: **SSE** — WebSocket = full-duplex we'd never use; polling = the lighter
+      free-tier fallback, kept in reserve, but the live feature ships SSE.
 
 ## Slice 1 — API stream + broadcaster
 - [ ] In-process hub: register/unregister clients + broadcast; connection cap (`STREAM_MAX_CONNS`).
