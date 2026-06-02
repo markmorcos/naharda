@@ -43,8 +43,18 @@ func (h *Handlers) FX(w http.ResponseWriter, r *http.Request) {
 	}
 	respond.JSON(w, r, 300, data, domain.Meta{
 		Sources:     oneSource(source, latest),
-		Attribution: "FX: exchangerate-api.com reference rate (CBE official wiring is a production follow-up). Free tier non-commercial.",
+		Attribution: fxAttribution(source),
 	})
+}
+
+// fxAttribution names the source actually served (CBE when canonical data is
+// available, the reference stand-in otherwise) — never claims CBE if the served
+// rows came from the cross-check (add-cbe-fx).
+func fxAttribution(source string) string {
+	if strings.Contains(source, "Central Bank") {
+		return "FX: Central Bank of Egypt (official). Free tier non-commercial."
+	}
+	return "FX: exchangerate-api.com reference rate (CBE official wiring is a production follow-up). Free tier non-commercial."
 }
 
 // FXHistory returns immutable history for a quote (?quote=usd&limit=). 1y cache.
