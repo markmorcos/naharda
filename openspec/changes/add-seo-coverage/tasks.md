@@ -14,4 +14,5 @@
 - [ ] Lighthouse SEO ≥95 check. (verify post-deploy)
 
 ## Slice 4 — OG images (stretch)
-- [ ] Dynamic OG image (satori) with the current number per intent page. (deferred — stretch)
+- [x] Dynamic OG image (satori → resvg) with the current number per intent page: `/og/<slug>.png`
+      (`?lang=ar` for Arabic), wired into `og:image` + `twitter:card=summary_large_image` via Base.
