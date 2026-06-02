@@ -50,3 +50,28 @@ affected family, so API instances can broadcast it without coupling ingest to th
 - **WHEN** ingest and api run as separate Deployments
 - **THEN** the API still receives the notification via Postgres, not shared memory
 
+### Requirement: Ingest cadences SHALL be configurable and frequent enough for the guard
+Ingest intervals MUST be configurable via environment variables, and the FX interval MUST default
+to a frequency that lets the outlier guard accumulate a baseline (≥3 samples/hour), so held-outlier
+detection and alerting are functional.
+
+#### Scenario: FX guard has a baseline
+- **WHEN** the API has been ingesting FX at the default cadence for the baseline window
+- **THEN** a sufficiently-deviating new FX value is held as pending_review and an alert is emitted
+
+#### Scenario: Cadence override
+- **WHEN** `FX_INTERVAL` is set to a valid cron spec
+- **THEN** the FX ingester uses it; an invalid value falls back to the default without crashing
+
+### Requirement: usage_log SHALL be partitioned by day and pruned to 90 days
+A scheduled maintenance job MUST ensure daily `usage_log` partitions exist ahead of time and MUST
+drop partitions older than 90 days, enforcing the §9.4 retention without losing in-window rows.
+
+#### Scenario: Partitions are maintained
+- **WHEN** the maintenance job runs
+- **THEN** today's and the next several days' partitions exist and rows land in the correct dated partition
+
+#### Scenario: Old data is pruned
+- **WHEN** a partition's date range is entirely older than 90 days
+- **THEN** that partition is detached and dropped, while in-window data is retained
+
