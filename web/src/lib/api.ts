@@ -36,6 +36,10 @@ export const getPrayer = (city = "cairo") => get(`/v1/prayer-times/${city}`);
 export const getCalendar = () => get("/v1/calendar");
 export const getCities = () => get("/v1/cities");
 export const getStats = () => get("/v1/stats");
+export const getFXHistory = (quote: string, limit = 30) =>
+  get(`/v1/fx/history?quote=${encodeURIComponent(quote)}&limit=${limit}`);
+export const getGoldHistory = (karat: number, limit = 30) =>
+  get(`/v1/gold/history?karat=${karat}&limit=${limit}`);
 
 // pingPath performs a server-side health check: "down" on error/non-200,
 // "degraded" when 200 but the data validator fails, else "up". Used by /status.

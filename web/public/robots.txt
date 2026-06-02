@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://naharda.com/sitemap-index.xml
