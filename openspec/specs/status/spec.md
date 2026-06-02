@@ -6,7 +6,7 @@ TBD - created by archiving change add-status-and-docs. Update Purpose after arch
 ### Requirement: A public status page SHALL show live component health and freshness
 A `/status` page MUST display live per-component health (API, database, and each data family) derived
 from server-side checks, plus per-family freshness and counters from `/v1/stats`, and MUST link to
-the UptimeKuma history for uptime/incidents. It MUST be reachable at `status.naharda.com`.
+the UptimeKuma history for uptime/incidents. It MUST be reachable at `naharda.com/status` (`status.naharda.com` an optional alias).
 
 #### Scenario: Everything healthy
 - **WHEN** the API, database and data families are healthy and fresh

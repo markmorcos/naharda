@@ -279,7 +279,7 @@ These bind every endpoint and every spec.
   bytes.
 - `usage_log` table (daily partitions, 90-day retention) feeds `/v1/stats` and future billing.
 - Health: `/healthz` (process up) and `/readyz` (process up + DB reachable) — wired to k8s probes.
-- Uptime monitored via existing UptimeKuma; public status page at `status.naharda.com`.
+- Uptime monitored via existing UptimeKuma; public status page at `naharda.com/status` (`status.naharda.com` an optional Cloudflare alias).
 
 ### 9.5 Data quality
 - Outlier guard: a new value >5% off the trailing 1h average is held + alerted, not auto-published.
@@ -320,8 +320,8 @@ Stripe Tax handles VAT/MOSS. **The non-commercial restriction on free/Hobby tier
 - **Namespace:** `naharda`. Deployment names follow the chart's `{namespace}-{name}` pattern →
   `naharda-api-deployment`, `naharda-web-deployment`.
 - **Images:** `ghcr.io/markmorcos/naharda-api`, `ghcr.io/markmorcos/naharda-web`.
-- **Hosts:** `api.naharda.com` (API), `naharda.com` (dashboard apex), `docs.naharda.com`,
-  `status.naharda.com`.
+- **Hosts:** `api.naharda.com` (API), `naharda.com` (dashboard apex; docs at `/docs`, status at
+  `/status`). `docs.naharda.com` / `status.naharda.com` are optional Cloudflare aliases, not separate deployables.
 - **Pipeline:** `repository_dispatch` → the `deploy-app` workflow in `markmorcos/infrastructure`
   builds multi-arch and runs `helm upgrade --version <chart-ver> -f <subproject>/deployment.yaml`.
   Add dispatch types **`deploy-naharda-api`** and **`deploy-naharda-web`** to that workflow, with a
@@ -418,6 +418,7 @@ Append-only. Each entry: date, decision, rationale, and what it supersedes.
 | 2026-06-01 | Primary TLD = **`.com`** (`naharda.com`) | Long-term-safe and B2B-trusted; `.io` only as a redirect given Chagos/Mauritius uncertainty over that TLD. |
 | 2026-06-01 | **Single monorepo `markmorcos/naharda`** (`api/` + `web/` + `specs/`) | Mirrors eventlane's monorepo split; one source of truth for the constitution and global spec sequence; per-service `deployment.yaml` + deploy workflow. |
 | 2026-06-01 | Adopt **OpenSpec** (`openspec/changes/` + `openspec/specs/`), **unnumbered** verb-led change names | Use the configured tooling; gain a durable capability-spec layer §13 lacked; roadmap order lives in §8, not folder numbers. Supersedes the `specs/NNNN-slug/` convention previously in §7/§13. |
+| 2026-06-02 | Docs + status served at `naharda.com/docs` and `/status` (paths), not dedicated subdomains | One `web/` deployable, no extra ingress/cert; SEO-clean canonical; `docs.`/`status.` subdomains optional Cloudflare aliases. Supersedes §9.4/§11 "reachable at the subdomain". |
 
 ---
 

@@ -7,9 +7,10 @@ import { getStats, pingPath } from "../lib/api";
 // rather than re-running the checks (add-status-and-docs).
 Astro.response.headers.set("Cache-Control", "public, max-age=60");
 
+// Optional external uptime history (e.g. UptimeKuma). No default — the link is
+// hidden unless PUBLIC_UPTIME_URL is set, so we never link a dead subdomain.
 const UPTIME_URL =
-  (typeof process !== "undefined" && process.env.PUBLIC_UPTIME_URL) ||
-  "https://status.naharda.com";
+  (typeof process !== "undefined" && process.env.PUBLIC_UPTIME_URL) || "";
 
 const [api, db, fx, gold, fuel, prayer, weather] = await Promise.all([
   pingPath("/healthz"),
@@ -83,7 +84,10 @@ const headColor = anyDown ? "var(--down)" : allUp ? "var(--up)" : "var(--accent)
     }
 
     <p class="muted" style="margin-top:var(--sp-4)">
-      <a href={UPTIME_URL}>Uptime history & incidents →</a> · Checks refresh every ~60s.
+      {UPTIME_URL && (
+        <a href={UPTIME_URL}>Uptime history & incidents →</a>
+      )}
+      {UPTIME_URL ? " · " : ""}Checks refresh every ~60s.
     </p>
   </article>
 </Base>
