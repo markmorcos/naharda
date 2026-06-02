@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/markmorcos/naharda/api/migrations"
 )
@@ -124,5 +125,48 @@ func TestActiveOverride(t *testing.T) {
 		`INSERT INTO manual_override (family, key, value, effective_from, effective_to) VALUES ('fuel','diesel',1,now() - interval '2 day', now() - interval '1 day')`)
 	if _, ok, _ := st.ActiveOverride(ctx, "fuel", "diesel"); ok {
 		t.Error("expired override should not be active")
+	}
+}
+
+func TestMaintainUsageLog(t *testing.T) {
+	st := testStore(t)
+	ctx := context.Background()
+	if err := st.MaintainUsageLog(ctx); err != nil {
+		t.Fatalf("maintain: %v", err)
+	}
+	// Future-dated partitions for the next week must now exist.
+	now := time.Now().UTC()
+	tomorrow := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.UTC).AddDate(0, 0, 1)
+	name := "usage_log_" + tomorrow.Format("20060102")
+	var exists bool
+	if err := st.Pool.QueryRow(ctx,
+		`SELECT EXISTS (SELECT 1 FROM pg_class WHERE relname = $1)`, name).Scan(&exists); err != nil {
+		t.Fatal(err)
+	}
+	if !exists {
+		t.Errorf("expected partition %s to exist", name)
+	}
+	// A stale partition (>90d old) must be pruned by a second run.
+	stale := tomorrow.AddDate(0, 0, -200)
+	staleName := "usage_log_" + stale.Format("20060102")
+	staleNext := stale.AddDate(0, 0, 1)
+	if _, err := st.Pool.Exec(ctx, "CREATE TABLE IF NOT EXISTS "+staleName+
+		" PARTITION OF usage_log FOR VALUES FROM ('"+stale.Format("2006-01-02")+
+		"') TO ('"+staleNext.Format("2006-01-02")+"')"); err != nil {
+		t.Fatalf("create stale: %v", err)
+	}
+	if err := st.MaintainUsageLog(ctx); err != nil {
+		t.Fatalf("maintain 2: %v", err)
+	}
+	if err := st.Pool.QueryRow(ctx,
+		`SELECT EXISTS (SELECT 1 FROM pg_class WHERE relname = $1)`, staleName).Scan(&exists); err != nil {
+		t.Fatal(err)
+	}
+	if exists {
+		t.Errorf("expected stale partition %s to be pruned", staleName)
+	}
+	// Idempotent: a repeat run must not error.
+	if err := st.MaintainUsageLog(ctx); err != nil {
+		t.Fatalf("maintain idempotent: %v", err)
 	}
 }

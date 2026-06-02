@@ -90,6 +90,16 @@ func main() {
 		if err := sch.Register(cfg.GoldInterval, "gold-world", runGold); err != nil {
 			logger.Error("register gold job", "err", err)
 		}
+		// Daily usage_log partition maintenance: ensure dated partitions ahead of
+		// time and prune partitions older than the 90-day retention (§9.4).
+		runMaint := func() {
+			if err := st.MaintainUsageLog(context.Background()); err != nil {
+				logger.Error("usage_log maintenance", "err", err)
+			}
+		}
+		if err := sch.Register("@daily", "usage-log-maintenance", runMaint); err != nil {
+			logger.Error("register maintenance job", "err", err)
+		}
 		// 🟡 sensitive ingest — only when the flag is on AND sources are registered (§8, §16 #1).
 		var runParallel, runRetail func()
 		if cfg.SensitiveEnabled {
@@ -110,6 +120,7 @@ func main() {
 		logger.Info("scheduler started", "mode", cfg.Mode)
 		// Prime data on startup: FX first, then gold (which depends on USD/EGP).
 		go func() {
+			runMaint() // ensure partitions exist before first inserts
 			runFX()
 			runGold()
 			if runParallel != nil {
