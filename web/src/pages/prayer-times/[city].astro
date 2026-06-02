@@ -1,0 +1,52 @@
+---
+import Base from "../../layouts/Base.astro";
+import RateCard from "../../components/RateCard.astro";
+import CitySelect from "../../components/CitySelect.astro";
+import { getCities, getPrayer } from "../../lib/api";
+
+const { city = "cairo" } = Astro.params;
+const cities: any[] = (await getCities())?.data ?? [];
+const cityObj = cities.find((c: any) => c.slug === city);
+if (cities.length > 0 && !cityObj) return Astro.redirect("/prayer-times/cairo");
+const name = cityObj?.name ?? city;
+
+const pr = await getPrayer(city);
+const t: any = pr?.data?.prayer_times?.timings ?? {};
+const method = pr?.data?.prayer_times?.method ?? "—";
+const order = ["Fajr", "Sunrise", "Dhuhr", "Asr", "Maghrib", "Isha"];
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: [
+    {
+      "@type": "Question",
+      name: `What time is Fajr in ${name} today?`,
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: t.Fajr
+          ? `Fajr in ${name} today is at ${t.Fajr} (${method}).`
+          : "Prayer times temporarily unavailable.",
+      },
+    },
+  ],
+};
+---
+
+<Base
+  title={`Prayer Times in ${name} Today | Naharda`}
+  description={`Today's prayer times in ${name}, Egypt: Fajr, Sunrise, Dhuhr, Asr, Maghrib and Isha — via Aladhan (Egyptian method), available as an API.`}
+  canonicalPath={`/prayer-times/${city}`}
+  enPath={`/prayer-times/${city}`}
+  jsonLd={jsonLd}
+>
+  <article style="padding:var(--sp-3) 0">
+    <h1 style="font-size:var(--step-3)">Prayer times in {name} today</h1>
+    <div style="margin:var(--sp-2) 0"><CitySelect cities={cities} current={city} base="/prayer-times/" /></div>
+    <div class="grid">
+      {order.map((p) => <RateCard label={p} value={t[p] ?? "—"} />)}
+    </div>
+    <p class="muted" style="margin-top:var(--sp-3)">method: {method} · via Aladhan</p>
+    <pre class="card num" style="overflow:auto"><code>curl https://api.naharda.com/v1/prayer-times/{city}</code></pre>
+  </article>
+</Base>

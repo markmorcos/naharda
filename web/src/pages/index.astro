@@ -67,10 +67,10 @@ const jsonLd = {
   <section class="grid">
     <RateCard label="USD → EGP (official)" value={usd} unit="EGP" sub={hasParallel ? `parallel ${parallelRange}` : undefined} href="/usd-to-egp" />
     <RateCard label="Gold 21k" value={gold21} unit="EGP/g" sub="world-derived" href="/gold-price-egypt" />
-    <RateCard label="Gasoline 92" value={gas92} unit="EGP/L" sub="official (EGPC)" />
-    <RateCard label="Weather · Cairo" value={temp} unit="°C" sub="now" />
-    <RateCard label="Fajr · Cairo" value={fajr} sub="prayer time today" />
-    <RateCard label="Hijri date" value={hijri} sub="Umm al-Qura" />
+    <RateCard label="Gasoline 92" value={gas92} unit="EGP/L" sub="official (EGPC)" href="/fuel-prices-egypt" />
+    <RateCard label="Weather · Cairo" value={temp} unit="°C" sub="now" href="/weather/cairo" />
+    <RateCard label="Fajr · Cairo" value={fajr} sub="prayer time today" href="/prayer-times/cairo" />
+    <RateCard label="Hijri date" value={hijri} sub="Umm al-Qura" href="/hijri-date" />
   </section>
 
   <section id="api" style="padding:var(--sp-5) 0 0">
