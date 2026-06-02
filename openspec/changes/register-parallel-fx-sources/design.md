@@ -24,9 +24,18 @@ internal/sources/sensitive.go:
       egcurrencyParallel{}, blackmarketLiveParallel{}, sarfEGPParallel{},
   }
 ```
-No other change. `sensitive.ParallelFXRun()` already iterates the registry, applies the 8%
-outlier guard against the 1h trailing avg, stores per-source `market='parallel'` quotes, and the
-`/v1/fx` handler aggregates them at read time into `{min,avg,max,n,sources[]}`.
+`sensitive.ParallelFXRun()` already iterates the registry, stores per-source `market='parallel'`
+quotes, and the `/v1/fx` handler aggregates them at read time into `{min,avg,max,n,sources[]}`.
+
+## DB seed + per-source threshold (symmetry with CBE)
+- **Seed migration** (`migrations/000NN_seed_parallel_fx_sources.sql`): insert the three into
+  `sources` with `family='fx'`, `canonical=false`, and an `outlier_threshold` (default 8.0 — wider
+  than official's 5.0, per §9.5). Idempotent `ON CONFLICT DO NOTHING`, with a matching `Down`.
+- **Threshold lookup**: `ParallelFXRun` reads each source's `outlier_threshold` from the `sources`
+  table (a `store.SourceThreshold(ctx, name)` lookup) instead of the hardcoded
+  `outlierThresholdPct = 8.0` constant. Falls back to 8.0 if the row is missing, so behavior is
+  unchanged when a source isn't seeded. This makes the guard tunable per source without a redeploy
+  and keeps parallel symmetric with how official sources live in the DB.
 
 ## Compliance (§2, §12)
 - Honest UA + contact on every request (reuse `userAgent`); low frequency (`@every 30m` default).
@@ -44,5 +53,6 @@ outlier guard against the 1h trailing avg, stores per-source `market='parallel'`
    so including both would inflate `n` with a correlated value and defeat the cross-source spread.
 2. **Reject Investing.com** despite richer data — its ToS prohibits scraping and it actively blocks
    bots; the honest-posture (§12) rules it out.
-3. **No engine/threshold changes** — the 8% parallel guard from `add-sensitive-sources` stands; this
-   change is purely source registration.
+3. **Threshold moves to the DB** — the hardcoded 8% becomes a per-source `outlier_threshold` column
+   (default 8.0), so parallel sources are tunable in the registry like official ones. Aggregation,
+   fail-soft, and the `/v1/fx` envelope are otherwise unchanged.

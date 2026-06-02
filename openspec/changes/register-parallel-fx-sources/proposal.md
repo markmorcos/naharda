@@ -23,14 +23,19 @@ three independent, low-frequency HTML sources.
 - **Source independence**: the three are independent publishers, so `n` ≥ 2 and `{min,avg,max}`
   is meaningful. `api-bank.fex.to` is **excluded** — it re-serves egcurrency and would
   double-count.
-- **No engine changes**: the 8% outlier guard, aggregation, attribution, and fail-soft already
-  exist. This change only registers sources + adds the scrapers.
+- **DB seed (symmetry with CBE)**: a seed migration adds the three to the `sources` table
+  (`family='fx'`, `canonical=false`) with a per-source `outlier_threshold`, so parallel sources
+  are visible/tunable in the registry exactly like the official ones.
+- **DB-driven threshold**: `ParallelFXRun` reads each source's `outlier_threshold` from the
+  `sources` table instead of the hardcoded `8.0` constant (falling back to 8% if absent), so the
+  guard is per-source tunable without a redeploy.
 - **Flag stays off in config by default**; turning `SENSITIVE_SOURCES_ENABLED=true` is the
   operator's deploy-time decision (this is the sign-off).
 
 ## Scope
 
-In: the three scraper implementations, their registration, per-source attribution metadata,
+In: the three scraper implementations, their code registration, a `sources` seed migration, the
+per-source `outlier_threshold` lookup in `ParallelFXRun`, per-source attribution metadata,
 verification that each selector matches the live page.
 
 ## Non-goals
@@ -46,7 +51,9 @@ verification that each selector matches the live page.
 - [ ] Each scraper carries the honest UA + contact and fail-soft: one source failing degrades
       only `n`/that quote, never the response (§2.6).
 - [ ] Sources are independent (no fex.to/egcurrency double-count); attribution names each site.
-- [ ] An out-of-band quote (>8% off the trailing avg) is held for review, not published.
+- [ ] The three sources appear in the `sources` table after migration (`family='fx'`).
+- [ ] An out-of-band quote (beyond the source's DB `outlier_threshold`, default 8%) is held for
+      review, not published.
 
 ## Dependencies
 

@@ -25,8 +25,18 @@ and on a failed or out-of-band fetch contribute nothing rather than a bogus numb
 failing degrades only `n`, never the response or `official` (§2.6, §9.5).
 
 #### Scenario: One source fails
-- **WHEN** a single parallel source errors or returns an out-of-band value (>8% off trailing avg)
+- **WHEN** a single parallel source errors or returns an out-of-band value (beyond its threshold)
 - **THEN** that quote is excluded/held for review and `parallel` is served from the remaining sources
+
+### Requirement: Parallel sources SHALL live in the source registry with a tunable threshold
+Each approved parallel source MUST be recorded in the `sources` registry (`family='fx'`,
+`canonical=false`) with an `outlier_threshold`, and the parallel ingest MUST use that per-source
+threshold (defaulting to 8% when absent) rather than a hardcoded value — so a source's tolerance is
+tunable without a redeploy, symmetric with official sources.
+
+#### Scenario: Per-source threshold drives the outlier guard
+- **WHEN** a registered parallel source has an `outlier_threshold` set in the registry
+- **THEN** the ingest holds/admits its quotes against that threshold, not a hardcoded constant
 
 #### Scenario: All sources fail
 - **WHEN** every parallel source fails to fetch
