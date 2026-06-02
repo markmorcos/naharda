@@ -45,3 +45,40 @@ A failure fetching a 🟡 source MUST NOT break the response; `parallel` degrade
 - **WHEN** a parallel source fails to fetch
 - **THEN** `official` still returns normally and `parallel` carries a `meta` staleness flag
 
+### Requirement: Parallel FX SHALL aggregate at least two independent approved sources
+When `SENSITIVE_SOURCES_ENABLED` is on, `parallel` MUST be computed from at least two
+**independent** approved publishers (no source that merely re-serves another), so `n` ≥ 2 and the
+`{min, avg, max}` spread reflects genuine cross-source disagreement. Each contributing source MUST
+be named in `meta` with its fetch time.
+
+#### Scenario: Aggregate from independent sources
+- **WHEN** the flag is on and at least two parallel sources return a quote
+- **THEN** `parallel` returns `{ min, avg, max, n, sources[] }` with `n` ≥ 2 and `meta` names each source
+
+#### Scenario: Correlated source excluded
+- **WHEN** a candidate source only re-publishes another registered source's value
+- **THEN** it is NOT registered, so it cannot inflate `n` or skew the spread
+
+### Requirement: Each parallel source SHALL be polite and fail-soft
+Every parallel scraper MUST send the honest `User-Agent` + contact link, poll at low frequency,
+and on a failed or out-of-band fetch contribute nothing rather than a bogus number — one source
+failing degrades only `n`, never the response or `official` (§2.6, §9.5).
+
+#### Scenario: One source fails
+- **WHEN** a single parallel source errors or returns an out-of-band value (beyond its threshold)
+- **THEN** that quote is excluded/held for review and `parallel` is served from the remaining sources
+
+#### Scenario: All sources fail
+- **WHEN** every parallel source fails to fetch
+- **THEN** `official` still returns normally and `parallel` is empty/stale with a `meta` flag
+
+### Requirement: Parallel sources SHALL live in the source registry with a tunable threshold
+Each approved parallel source MUST be recorded in the `sources` registry (`family='fx'`,
+`canonical=false`) with an `outlier_threshold`, and the parallel ingest MUST use that per-source
+threshold (defaulting to 8% when absent) rather than a hardcoded value — so a source's tolerance is
+tunable without a redeploy, symmetric with official sources.
+
+#### Scenario: Per-source threshold drives the outlier guard
+- **WHEN** a registered parallel source has an `outlier_threshold` set in the registry
+- **THEN** the ingest holds/admits its quotes against that threshold, not a hardcoded constant
+
