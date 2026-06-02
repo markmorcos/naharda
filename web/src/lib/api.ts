@@ -7,7 +7,7 @@
 const runtimeEnv = (k: string): string | undefined =>
   typeof process !== "undefined" ? process.env[k] : undefined;
 
-const API_BASE =
+export const API_BASE =
   runtimeEnv("API_BASE") ?? import.meta.env.API_BASE ?? "http://localhost:8080";
 
 async function get<T = any>(path: string): Promise<T | null> {

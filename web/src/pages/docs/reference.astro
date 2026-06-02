@@ -1,9 +1,24 @@
 ---
 import Base from "../../layouts/Base.astro";
+import { API_BASE } from "../../lib/api";
 
-// The reference renders the live OpenAPI document (served by the API) with a
-// "try it" console. CORS already allows browser calls to the API.
+// Human-facing link + client-side fallback URL (the live, browser-reachable spec).
 const SPEC_URL = "https://api.naharda.com/v1/openapi.json";
+
+// SSR-fetch the spec and hand it to Scalar inline (`content`) so the browser
+// makes NO cross-origin request — sidestepping CORS / proxy / Scalar config
+// quirks that left the embed showing "Document could not be loaded". If the SSR
+// fetch fails, fall back to letting Scalar load the URL via its proxy.
+let specContent: string | null = null;
+try {
+  const res = await fetch(`${API_BASE}/v1/openapi.json`, {
+    headers: { Accept: "application/json" },
+    signal: AbortSignal.timeout(4000),
+  });
+  if (res.ok) specContent = await res.text();
+} catch {
+  // fail-soft: specContent stays null and the client falls back to url+proxy
+}
 ---
 
 <Base
@@ -21,19 +36,19 @@ const SPEC_URL = "https://api.naharda.com/v1/openapi.json";
     </p>
   </article>
 
-  <!-- Scalar API Reference: a single CDN script, no build step. Pinned so a new
-       major can't break the embed (the legacy `id="api-reference"` script-tag
-       pattern was dropped upstream). It fetches SPEC_URL and renders an
-       interactive "try it" console. -->
+  <!-- Scalar API Reference: a single CDN script, pinned so a new major can't
+       break the embed. The spec is embedded inline (SSR-fetched above), so the
+       browser performs no cross-origin fetch; url+proxy is only the fallback. -->
   <div style="margin:0 calc(-1 * var(--sp-3))">
     <div id="app"></div>
     <script is:inline src="https://cdn.jsdelivr.net/npm/@scalar/api-reference@1.58.0"></script>
-    <script is:inline define:vars={{ SPEC_URL }}>
-      Scalar.createApiReference("#app", {
-        url: SPEC_URL,
-        theme: "default",
-        hideDownloadButton: false,
-      });
+    <script is:inline define:vars={{ specContent, SPEC_URL }}>
+      Scalar.createApiReference(
+        "#app",
+        specContent
+          ? { content: specContent, theme: "default", hideDownloadButton: false }
+          : { url: SPEC_URL, proxyUrl: "https://proxy.scalar.com", theme: "default", hideDownloadButton: false },
+      );
     </script>
   </div>
 </Base>
