@@ -45,16 +45,18 @@ const specContent =
 
   <!-- Scalar API Reference: a single CDN script, pinned so a new major can't
        break the embed. The spec is embedded inline (SSR-fetched above), so the
-       browser performs no cross-origin fetch; url+proxy is only the fallback. -->
-  <div style="margin:0 calc(-1 * var(--sp-3))">
+       browser performs no cross-origin fetch; url+proxy is only the fallback.
+       `layout: classic` keeps it single-column (the modern two-pane overflows
+       narrow viewports); the wrapper contains any residual horizontal overflow. -->
+  <div style="max-width:100%;overflow-x:hidden">
     <div id="app"></div>
     <script is:inline src="https://cdn.jsdelivr.net/npm/@scalar/api-reference@1.58.0"></script>
     <script is:inline define:vars={{ specContent, SPEC_URL }}>
       Scalar.createApiReference(
         "#app",
         specContent
-          ? { content: specContent, theme: "default", hideDownloadButton: false }
-          : { url: SPEC_URL, proxyUrl: "https://proxy.scalar.com", theme: "default", hideDownloadButton: false },
+          ? { content: specContent, layout: "classic", theme: "default", hideDownloadButton: false }
+          : { url: SPEC_URL, proxyUrl: "https://proxy.scalar.com", layout: "classic", theme: "default", hideDownloadButton: false },
       );
     </script>
   </div>
