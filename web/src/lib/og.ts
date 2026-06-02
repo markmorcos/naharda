@@ -62,16 +62,19 @@ export async function renderOG(card: OGCard): Promise<Buffer> {
         h("div", { fontSize: "24px", color: C.muted, direction: "ltr", fontFamily: "IBM Plex Sans" }, "naharda.com"),
       ]),
       // Main: headline + big value
-      h("div", { display: "flex", flexDirection: "column" }, [
-        h("div", { fontSize: "40px", fontWeight: 600, lineHeight: 1.15, maxWidth: "1000px" }, card.headline),
-        h("div", { display: "flex", alignItems: "flex-end", gap: "18px", marginTop: "20px" }, [
+      h("div", { display: "flex", flexDirection: "column", alignItems: card.isAr ? "flex-end" : "flex-start" }, [
+        h("div", { fontSize: "40px", fontWeight: 600, lineHeight: 1.15, maxWidth: "1000px",
+          direction: card.isAr ? "rtl" : "ltr", textAlign: card.isAr ? "right" : "left" }, card.headline),
+        h("div", { display: "flex", alignItems: "flex-end", gap: "18px", marginTop: "20px",
+          flexDirection: card.isAr ? "row-reverse" : "row" }, [
           h("div", { fontSize: `${bigSize}px`, fontWeight: 600, lineHeight: 1, direction: "ltr", fontFamily: "IBM Plex Sans" }, card.big),
           card.unit ? h("div", { fontSize: "40px", color: C.muted, paddingBottom: "16px" }, card.unit) : null,
         ].filter(Boolean)),
       ]),
       // Footer: sub-label · updated
       h("div", { display: "flex", alignItems: "center", justifyContent: "space-between" }, [
-        h("div", { fontSize: "30px", fontWeight: 600, color: C.accent }, card.sub),
+        h("div", { fontSize: "30px", fontWeight: 600, color: C.accent,
+          direction: card.isAr ? "rtl" : "ltr" }, card.sub),
         h("div", { fontSize: "22px", color: C.muted, direction: "ltr", fontFamily: "IBM Plex Sans" }, card.updated ?? ""),
       ]),
     ],
