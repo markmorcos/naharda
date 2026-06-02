@@ -20,6 +20,7 @@ import (
 	"github.com/markmorcos/naharda/api/internal/quality"
 	"github.com/markmorcos/naharda/api/internal/scheduler"
 	"github.com/markmorcos/naharda/api/internal/store"
+	"github.com/markmorcos/naharda/api/internal/stream"
 	"github.com/markmorcos/naharda/api/migrations"
 )
 
@@ -54,11 +55,16 @@ func main() {
 	runAPI := cfg.Mode == "api" || cfg.Mode == "all"
 	runIngest := cfg.Mode == "ingest" || cfg.Mode == "all"
 
+	// Live-update hub + a runtime context cancelled on shutdown (add-live-updates).
+	hub := stream.NewHub(cfg.StreamMaxConns)
+	runCtx, runCancel := context.WithCancel(context.Background())
+	defer runCancel()
+
 	var srv *http.Server
 	if runAPI {
 		srv = &http.Server{
 			Addr:              ":" + cfg.Port,
-			Handler:           httpapi.NewRouter(cfg, st, logger),
+			Handler:           httpapi.NewRouter(cfg, st, logger, hub),
 			ReadHeaderTimeout: 10 * time.Second,
 		}
 		go func() {
@@ -68,6 +74,8 @@ func main() {
 				os.Exit(1)
 			}
 		}()
+		// Bridge Postgres NOTIFY → SSE clients.
+		go stream.Listen(runCtx, st, hub, logger)
 	}
 
 	var sch *scheduler.Scheduler
@@ -118,6 +126,8 @@ func main() {
 
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
+	runCancel()    // stop the stream listener
+	hub.Shutdown() // drain SSE clients so they reconnect to the next pod
 	if srv != nil {
 		_ = srv.Shutdown(shutdownCtx)
 	}

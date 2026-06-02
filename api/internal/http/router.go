@@ -12,10 +12,11 @@ import (
 	"github.com/markmorcos/naharda/api/internal/http/handlers"
 	mw "github.com/markmorcos/naharda/api/internal/http/middleware"
 	"github.com/markmorcos/naharda/api/internal/store"
+	"github.com/markmorcos/naharda/api/internal/stream"
 )
 
 // NewRouter assembles the chi router with the full middleware chain (§9).
-func NewRouter(cfg config.Config, st *store.Store, logger *slog.Logger) http.Handler {
+func NewRouter(cfg config.Config, st *store.Store, logger *slog.Logger, hub *stream.Hub) http.Handler {
 	r := chi.NewRouter()
 
 	// Order matters: recover → real-ip → request-id → logging → cors → rate-limit → auth.
@@ -27,7 +28,7 @@ func NewRouter(cfg config.Config, st *store.Store, logger *slog.Logger) http.Han
 	r.Use(mw.RateLimit(cfg.RatePerMinute, cfg.RatePerDay))
 	r.Use(mw.Auth) // reads Bearer; no-op until v2
 
-	h := handlers.New(st, cfg.SensitiveEnabled)
+	h := handlers.New(st, cfg.SensitiveEnabled, hub)
 
 	// Health/readiness are unversioned and uncached (§9.4).
 	r.Get("/healthz", h.Healthz)
@@ -52,6 +53,9 @@ func NewRouter(cfg config.Config, st *store.Store, logger *slog.Logger) http.Han
 		// Dashboard support: email capture + public stats (§10).
 		r.Post("/signups", h.Signups)
 		r.Get("/stats", h.Stats)
+
+		// Live updates (SSE) — additive, no-store (add-live-updates).
+		r.Get("/stream", h.Stream)
 	})
 
 	return r

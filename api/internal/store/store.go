@@ -120,6 +120,16 @@ func (s *Store) ActiveOverride(ctx context.Context, family, key string) (float64
 	return value, true, nil
 }
 
+// Notify publishes a Postgres NOTIFY so stream listeners can broadcast a change
+// (add-live-updates). Best-effort; decoupled from the API process (§5).
+func (s *Store) Notify(ctx context.Context, channel, payload string) error {
+	if s == nil || s.Pool == nil {
+		return errNoDB
+	}
+	_, err := s.Pool.Exec(ctx, "SELECT pg_notify($1, $2)", channel, payload)
+	return err
+}
+
 // Migrate runs goose migrations from the embedded filesystem.
 func Migrate(dsn string, fsys fs.FS) error {
 	db, err := sql.Open("pgx", dsn)

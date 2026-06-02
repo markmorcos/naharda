@@ -56,7 +56,7 @@ const jsonLd = {
   <section style="padding:var(--sp-3) 0 var(--sp-4)">
     <p class="muted" style="margin:0">The dollar today</p>
     <p class="num delta-up" style="font-size:var(--hero);margin:.1em 0;line-height:1">
-      {usd ? usd.toFixed(2) : "—"}
+      <span id="live-usd" data-live="usd">{usd ? usd.toFixed(2) : "—"}</span>
       <span class="muted" style="font-size:var(--step-1)">EGP</span>
     </p>
     <p class="muted" style="margin:0">
@@ -82,4 +82,38 @@ const jsonLd = {
   <section style="padding:var(--sp-4) 0">
     <EmailCapture lang="en" />
   </section>
+
+  <!-- Live updates (SSE) — progressive enhancement over the SSR values (add-live-updates). -->
+  <script is:inline define:vars={{ apiBase: API_PUBLIC_BASE }}>
+    (function () {
+      if (!("EventSource" in window)) return;
+      const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+      let es;
+      function pulse() {
+        if (reduce) return;
+        const dot = document.querySelector(".dot");
+        if (!dot) return;
+        dot.classList.remove("pulse");
+        void dot.offsetWidth; // restart the animation
+        dot.classList.add("pulse");
+      }
+      function apply(raw) {
+        let d;
+        try { d = JSON.parse(raw); } catch { return; }
+        const usd = d && d.fx && d.fx.official && d.fx.official.usd;
+        const el = document.getElementById("live-usd");
+        if (el && typeof usd === "number") {
+          const next = usd.toFixed(2);
+          if (el.textContent !== next) { el.textContent = next; pulse(); }
+        }
+      }
+      function connect() {
+        es = new EventSource(apiBase + "/v1/stream");
+        es.addEventListener("snapshot", (e) => apply(e.data));
+        es.addEventListener("update", (e) => apply(e.data));
+        // EventSource auto-reconnects on error; nothing else needed.
+      }
+      connect();
+    })();
+  </script>
 </Base>
