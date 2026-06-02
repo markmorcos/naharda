@@ -1,0 +1,89 @@
+---
+import Base from "../layouts/Base.astro";
+import RateCard from "../components/RateCard.astro";
+import { getStats, pingPath } from "../lib/api";
+
+// The status page is itself a cacheable read — a burst of views hits the cache
+// rather than re-running the checks (add-status-and-docs).
+Astro.response.headers.set("Cache-Control", "public, max-age=60");
+
+const UPTIME_URL =
+  (typeof process !== "undefined" && process.env.PUBLIC_UPTIME_URL) ||
+  "https://status.naharda.com";
+
+const [api, db, fx, gold, fuel, prayer, weather] = await Promise.all([
+  pingPath("/healthz"),
+  pingPath("/readyz"),
+  pingPath("/v1/fx", (j) => j?.data?.official && Object.keys(j.data.official).length > 0),
+  pingPath("/v1/gold", (j) => j?.data?.world_derived?.length > 0),
+  pingPath("/v1/fuel", (j) => Array.isArray(j?.data) && j.data.length > 0),
+  pingPath("/v1/prayer-times/cairo", (j) => !!j?.data?.prayer_times?.timings),
+  pingPath("/v1/weather/cairo", (j) => typeof j?.data?.weather?.temperature_c === "number"),
+]);
+
+const components = [
+  { name: "API", status: api },
+  { name: "Database", status: db },
+  { name: "FX (official)", status: fx },
+  { name: "Gold (world-derived)", status: gold },
+  { name: "Fuel", status: fuel },
+  { name: "Prayer times", status: prayer },
+  { name: "Weather / AQI", status: weather },
+];
+const allUp = components.every((x) => x.status === "up");
+const anyDown = components.some((x) => x.status === "down");
+
+const color = (s: string) => (s === "up" ? "var(--up)" : s === "degraded" ? "var(--accent)" : "var(--down)");
+const label = (s: string) => (s === "up" ? "Operational" : s === "degraded" ? "Degraded" : "Down");
+
+const stats: any = await getStats();
+const fmt = (t: string | null) => (t ? new Date(t).toUTCString().replace("GMT", "UTC") : "—");
+const headline = anyDown ? "Some systems are down" : allUp ? "All systems operational" : "Some systems degraded";
+const headColor = anyDown ? "var(--down)" : allUp ? "var(--up)" : "var(--accent)";
+---
+
+<Base
+  title="Status — Naharda API"
+  description="Live status of the Naharda API: component health and data freshness, with uptime history."
+  canonicalPath="/status"
+  enPath="/status"
+>
+  <article style="padding:var(--sp-3) 0;max-width:42rem">
+    <h1 style="font-size:var(--step-3)">Status</h1>
+    <p style={`font-size:var(--step-1);color:${headColor};font-weight:600`}>
+      <span class="dot" style={`background:${headColor}`}></span> {headline}
+    </p>
+
+    <div class="card" style="margin-top:var(--sp-2)">
+      {
+        components.map((x) => (
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:.55em 0;border-bottom:1px solid var(--border)">
+            <span>
+              <span style={`display:inline-block;width:.6em;height:.6em;border-radius:50%;background:${color(x.status)};margin-inline-end:.6em`} />
+              {x.name}
+            </span>
+            <span class="num" style={`color:${color(x.status)};font-size:var(--step--1)`}>{label(x.status)}</span>
+          </div>
+        ))
+      }
+    </div>
+
+    {
+      stats?.data && (
+        <>
+          <h2 style="font-size:var(--step-1);margin-top:var(--sp-4)">Freshness & volume</h2>
+          <div class="grid">
+            <RateCard label="Requests served" value={stats.data.requests_served_total} />
+            <RateCard label="FX last updated" value={fmt(stats.data.last_fx_at)} />
+            <RateCard label="Gold last updated" value={fmt(stats.data.last_gold_at)} />
+            <RateCard label="Data points (FX + gold)" value={(stats.data.fx_data_points ?? 0) + (stats.data.gold_data_points ?? 0)} />
+          </div>
+        </>
+      )
+    }
+
+    <p class="muted" style="margin-top:var(--sp-4)">
+      <a href={UPTIME_URL}>Uptime history & incidents →</a> · Checks refresh every ~60s.
+    </p>
+  </article>
+</Base>

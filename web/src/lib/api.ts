@@ -36,6 +36,22 @@ export const getPrayer = (city = "cairo") => get(`/v1/prayer-times/${city}`);
 export const getCalendar = () => get("/v1/calendar");
 export const getStats = () => get("/v1/stats");
 
+// pingPath performs a server-side health check: "down" on error/non-200,
+// "degraded" when 200 but the data validator fails, else "up". Used by /status.
+export async function pingPath(
+  path: string,
+  hasData?: (j: any) => boolean,
+): Promise<"up" | "degraded" | "down"> {
+  try {
+    const res = await fetch(`${API_BASE}${path}`, { signal: AbortSignal.timeout(4000) });
+    if (!res.ok) return "down";
+    if (!hasData) return "up";
+    return hasData(await res.json()) ? "up" : "degraded";
+  } catch {
+    return "down";
+  }
+}
+
 export const API_PUBLIC_BASE =
   runtimeEnv("PUBLIC_API_BASE") ??
   import.meta.env.PUBLIC_API_BASE ??
