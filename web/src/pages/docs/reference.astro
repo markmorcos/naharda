@@ -1,0 +1,35 @@
+---
+import Base from "../../layouts/Base.astro";
+
+// The reference renders the live OpenAPI document (served by the API) with a
+// "try it" console. CORS already allows browser calls to the API.
+const SPEC_URL = "https://api.naharda.com/v1/openapi.json";
+---
+
+<Base
+  title="API Reference — Naharda (interactive OpenAPI)"
+  description="Interactive Naharda API reference generated from the live OpenAPI 3.1 document: browse every endpoint, see schemas and examples, and try requests against the live API."
+  canonicalPath="/docs/reference"
+  enPath="/docs/reference"
+>
+  <article style="padding:var(--sp-3) 0;max-width:46rem">
+    <h1 style="font-size:var(--step-3)">API Reference</h1>
+    <p class="muted">
+      Generated from the live <a href={SPEC_URL}><code>/v1/openapi.json</code></a> document. Use
+      the panel below to explore endpoints and try requests. Prefer prose? See the
+      <a href="/docs">hand-written docs</a>.
+    </p>
+  </article>
+
+  <!-- Scalar API Reference: a single script, no build step. It reads the spec
+       URL and offers an interactive "try it" console. -->
+  <div style="margin:0 calc(-1 * var(--sp-3))">
+    <script
+      is:inline
+      id="api-reference"
+      data-url={SPEC_URL}
+      data-configuration='{"theme":"default","hideDownloadButton":false}'
+    ></script>
+    <script is:inline src="https://cdn.jsdelivr.net/npm/@scalar/api-reference"></script>
+  </div>
+</Base>

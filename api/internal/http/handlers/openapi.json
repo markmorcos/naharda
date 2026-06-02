@@ -1,0 +1,213 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Naharda API",
+    "version": "1.0.0",
+    "description": "Dev-first data API for what's happening in Egypt today: FX, gold, fuel, prayer times, weather, air quality and the Hijri calendar. Every response uses the same `{ data, meta }` envelope, supports ETag/304, and is edge-cacheable. Auth: `Authorization: Bearer <key>` is accepted but is a no-op in v1 (anonymous tier).",
+    "contact": { "name": "Naharda", "url": "https://naharda.com" },
+    "license": { "name": "Free tier — non-commercial, attribution required" }
+  },
+  "servers": [{ "url": "https://api.naharda.com", "description": "Production" }],
+  "tags": [
+    { "name": "market", "description": "FX and gold prices" },
+    { "name": "daily", "description": "Prayer times, weather, air quality, fuel, calendar" },
+    { "name": "meta", "description": "Service metadata, stats, health, live updates" }
+  ],
+  "paths": {
+    "/healthz": {
+      "get": {
+        "tags": ["meta"],
+        "summary": "Liveness probe",
+        "description": "Process liveness. Uncached.",
+        "responses": { "200": { "description": "Process is alive", "content": { "application/json": { "schema": { "type": "object", "properties": { "status": { "type": "string", "example": "ok" } } } } } } }
+      }
+    },
+    "/readyz": {
+      "get": {
+        "tags": ["meta"],
+        "summary": "Readiness probe",
+        "description": "Readiness including database reachability. Uncached.",
+        "responses": {
+          "200": { "description": "Ready", "content": { "application/json": { "schema": { "type": "object", "properties": { "status": { "type": "string", "example": "ready" } } } } } },
+          "503": { "description": "Not ready" }
+        }
+      }
+    },
+    "/v1/cities": {
+      "get": {
+        "tags": ["daily"],
+        "summary": "List canonical cities",
+        "description": "The canonical set of supported Egyptian cities. Long-cached (24h).",
+        "responses": { "200": { "$ref": "#/components/responses/Envelope" } }
+      }
+    },
+    "/v1/calendar": {
+      "get": {
+        "tags": ["daily"],
+        "summary": "Gregorian ↔ Hijri calendar",
+        "description": "Converts today (or `?date=YYYY-MM-DD`) between Gregorian and the Umm al-Qura Hijri calendar.",
+        "parameters": [{ "name": "date", "in": "query", "required": false, "schema": { "type": "string", "format": "date" }, "example": "2026-06-02" }],
+        "responses": { "200": { "$ref": "#/components/responses/Envelope" }, "400": { "$ref": "#/components/responses/Error" }, "422": { "$ref": "#/components/responses/Error" } }
+      }
+    },
+    "/v1/prayer-times/{city}": {
+      "get": {
+        "tags": ["daily"],
+        "summary": "Prayer times for a city",
+        "parameters": [{ "$ref": "#/components/parameters/City" }],
+        "responses": { "200": { "$ref": "#/components/responses/Envelope" }, "404": { "$ref": "#/components/responses/Error" } }
+      }
+    },
+    "/v1/weather/{city}": {
+      "get": {
+        "tags": ["daily"],
+        "summary": "Current weather for a city",
+        "parameters": [{ "$ref": "#/components/parameters/City" }],
+        "responses": { "200": { "$ref": "#/components/responses/Envelope" }, "404": { "$ref": "#/components/responses/Error" } }
+      }
+    },
+    "/v1/aqi/{city}": {
+      "get": {
+        "tags": ["daily"],
+        "summary": "Air quality for a city",
+        "parameters": [{ "$ref": "#/components/parameters/City" }],
+        "responses": { "200": { "$ref": "#/components/responses/Envelope" }, "404": { "$ref": "#/components/responses/Error" } }
+      }
+    },
+    "/v1/fuel": {
+      "get": {
+        "tags": ["daily"],
+        "summary": "Official fuel prices",
+        "responses": { "200": { "$ref": "#/components/responses/Envelope" } }
+      }
+    },
+    "/v1/fx": {
+      "get": {
+        "tags": ["market"],
+        "summary": "Latest FX rates (EGP)",
+        "description": "Official/world-derived FX rates against EGP. Parallel-market (🟡) fields are empty until sensitive sources are enabled.",
+        "responses": { "200": { "$ref": "#/components/responses/Envelope" } }
+      }
+    },
+    "/v1/fx/history": {
+      "get": {
+        "tags": ["market"],
+        "summary": "FX rate history",
+        "parameters": [{ "name": "quote", "in": "query", "required": false, "schema": { "type": "string" }, "example": "USD" }],
+        "responses": { "200": { "$ref": "#/components/responses/Envelope" } }
+      }
+    },
+    "/v1/gold": {
+      "get": {
+        "tags": ["market"],
+        "summary": "Latest gold prices (EGP)",
+        "responses": { "200": { "$ref": "#/components/responses/Envelope" } }
+      }
+    },
+    "/v1/gold/history": {
+      "get": {
+        "tags": ["market"],
+        "summary": "Gold price history",
+        "parameters": [{ "name": "karat", "in": "query", "required": false, "schema": { "type": "string" }, "example": "24" }],
+        "responses": { "200": { "$ref": "#/components/responses/Envelope" } }
+      }
+    },
+    "/v1/signups": {
+      "post": {
+        "tags": ["meta"],
+        "summary": "Capture an email signup",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "required": ["email"], "properties": { "email": { "type": "string", "format": "email" } } }, "example": { "email": "dev@example.com" } } } },
+        "responses": { "200": { "$ref": "#/components/responses/Envelope" }, "400": { "$ref": "#/components/responses/Error" } }
+      }
+    },
+    "/v1/stats": {
+      "get": {
+        "tags": ["meta"],
+        "summary": "Public service statistics",
+        "description": "Aggregate, non-personal counters (requests served, families tracked, freshness).",
+        "responses": { "200": { "$ref": "#/components/responses/Envelope" } }
+      }
+    },
+    "/v1/stream": {
+      "get": {
+        "tags": ["meta"],
+        "summary": "Live updates (SSE)",
+        "description": "Server-Sent Events stream (`text/event-stream`). Connect with an `EventSource`; each message is a JSON event describing a freshly-updated data family. Not cached (`no-store`).",
+        "responses": { "200": { "description": "An event stream", "content": { "text/event-stream": { "schema": { "type": "string" } } } } }
+      }
+    },
+    "/v1/openapi.json": {
+      "get": {
+        "tags": ["meta"],
+        "summary": "This OpenAPI document",
+        "description": "The machine-readable OpenAPI 3.1 description of this API. Long-cached with an ETag.",
+        "responses": { "200": { "description": "The OpenAPI document", "content": { "application/json": { "schema": { "type": "object" } } } } }
+      }
+    }
+  },
+  "components": {
+    "parameters": {
+      "City": { "name": "city", "in": "path", "required": true, "description": "City slug (see /v1/cities).", "schema": { "type": "string" }, "example": "cairo" }
+    },
+    "responses": {
+      "Envelope": {
+        "description": "Standard data envelope",
+        "headers": {
+          "ETag": { "description": "Strong validator over the data payload; pair with If-None-Match for 304.", "schema": { "type": "string" } },
+          "Cache-Control": { "description": "Edge/browser cache policy for this resource.", "schema": { "type": "string" } }
+        },
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Envelope" } } }
+      },
+      "Error": {
+        "description": "Standard error envelope",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
+      }
+    },
+    "schemas": {
+      "Envelope": {
+        "type": "object",
+        "required": ["data", "meta"],
+        "properties": {
+          "data": { "description": "The resource payload (shape varies per endpoint)." },
+          "meta": { "$ref": "#/components/schemas/Meta" }
+        }
+      },
+      "Meta": {
+        "type": "object",
+        "properties": {
+          "tier": { "type": "string", "example": "anonymous" },
+          "cached_at": { "type": "string", "format": "date-time" },
+          "freshness_seconds": { "type": "integer", "description": "Age of the underlying data in seconds." },
+          "sources": { "type": "array", "items": { "$ref": "#/components/schemas/Source" } },
+          "attribution": { "type": "string" }
+        }
+      },
+      "Source": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string", "example": "Central Bank of Egypt" },
+          "fetched_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "required": ["error"],
+        "properties": {
+          "error": {
+            "type": "object",
+            "required": ["code", "message"],
+            "properties": {
+              "code": { "type": "string", "example": "invalid_date" },
+              "message": { "type": "string", "example": "Use date=YYYY-MM-DD." },
+              "retry_after_seconds": { "type": "integer" }
+            }
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "bearerAuth": { "type": "http", "scheme": "bearer", "description": "Accepted but a no-op in v1 (everyone is the anonymous tier)." }
+    }
+  },
+  "security": [{ "bearerAuth": [] }]
+}

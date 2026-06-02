@@ -22,6 +22,10 @@ const c = (p: string) => `curl ${B}${p}`;
       <li><strong>Base URL:</strong> <code>{B}</code></li>
       <li><strong>Auth:</strong> none in v1 — public, IP rate-limited (60 req/min · 1000 req/day).</li>
       <li><strong>Format:</strong> JSON only. Free tier is non-commercial.</li>
+      <li>
+        <strong>OpenAPI:</strong> <a href={`${B}/v1/openapi.json`}><code>{B}/v1/openapi.json</code></a> ·
+        <a href="/docs/reference">interactive reference →</a>
+      </li>
     </ul>
 
     <h2 style="font-size:var(--step-2);margin-top:var(--sp-4)">Conventions</h2>

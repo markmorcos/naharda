@@ -56,6 +56,9 @@ func NewRouter(cfg config.Config, st *store.Store, logger *slog.Logger, hub *str
 
 		// Live updates (SSE) — additive, no-store (add-live-updates).
 		r.Get("/stream", h.Stream)
+
+		// Machine-readable API description (add-openapi).
+		r.Get("/openapi.json", h.OpenAPI)
 	})
 
 	return r
