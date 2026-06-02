@@ -7,18 +7,25 @@ const SPEC_URL = "https://api.naharda.com/v1/openapi.json";
 
 // SSR-fetch the spec and hand it to Scalar inline (`content`) so the browser
 // makes NO cross-origin request — sidestepping CORS / proxy / Scalar config
-// quirks that left the embed showing "Document could not be loaded". If the SSR
-// fetch fails, fall back to letting Scalar load the URL via its proxy.
-let specContent: string | null = null;
-try {
-  const res = await fetch(`${API_BASE}/v1/openapi.json`, {
-    headers: { Accept: "application/json" },
-    signal: AbortSignal.timeout(4000),
-  });
-  if (res.ok) specContent = await res.text();
-} catch {
-  // fail-soft: specContent stays null and the client falls back to url+proxy
+// quirks that left the embed showing "Document could not be loaded". Try the
+// in-cluster API first (fast), then the public URL (which is verified to serve
+// the doc even if the internal image lags). If both fail, the client falls back
+// to letting Scalar load the URL via its proxy.
+async function fetchSpec(url: string): Promise<string | null> {
+  try {
+    const res = await fetch(url, {
+      headers: { Accept: "application/json" },
+      signal: AbortSignal.timeout(4000),
+    });
+    if (res.ok) return await res.text();
+  } catch {
+    // fail-soft: try the next source
+  }
+  return null;
 }
+
+const specContent =
+  (await fetchSpec(`${API_BASE}/v1/openapi.json`)) ?? (await fetchSpec(SPEC_URL));
 ---
 
 <Base
