@@ -41,16 +41,26 @@ function h(type: string, style: Record<string, unknown>, children?: unknown): un
   return { type, props: { style, children } };
 }
 
+// satori does not reorder RTL runs (it lays words in logical order L→R, which
+// reads backwards for Arabic). For our predominantly-RTL headlines/labels —
+// Arabic words plus standalone neutral tokens (digits, "·") — reversing the
+// whitespace-separated tokens and laying them out L→R yields the correct visual
+// RTL order. (Per-letter shaping/joining is handled by satori on each token.)
+const visualRTL = (s: string): string => s.trim().split(/\s+/).reverse().join(" ");
+
 export async function renderOG(card: OGCard): Promise<Buffer> {
   const family = card.isAr ? "IBM Plex Sans Arabic" : "IBM Plex Sans";
   const bigSize = card.big.length > 7 ? 100 : 150;
+  const ar = card.isAr === true;
+  const headline = ar ? visualRTL(card.headline) : card.headline;
+  const sub = ar ? visualRTL(card.sub) : card.sub;
 
   const tree = h(
     "div",
     {
       width: "1200px", height: "630px", display: "flex", flexDirection: "column",
       justifyContent: "space-between", padding: "64px 72px", backgroundColor: C.bg,
-      color: C.ink, fontFamily: family, direction: card.isAr ? "rtl" : "ltr",
+      color: C.ink, fontFamily: family, direction: "ltr",
     },
     [
       // Header: wordmark + dot · domain
@@ -59,23 +69,23 @@ export async function renderOG(card: OGCard): Promise<Buffer> {
           h("div", { fontSize: "36px", fontWeight: 600, color: C.brand, fontFamily: "IBM Plex Sans" }, "naharda"),
           h("div", { width: "18px", height: "18px", borderRadius: "9px", backgroundColor: C.accent }),
         ]),
-        h("div", { fontSize: "24px", color: C.muted, direction: "ltr", fontFamily: "IBM Plex Sans" }, "naharda.com"),
+        h("div", { fontSize: "24px", color: C.muted, fontFamily: "IBM Plex Sans" }, "naharda.com"),
       ]),
-      // Main: headline + big value
-      h("div", { display: "flex", flexDirection: "column", alignItems: card.isAr ? "flex-end" : "flex-start" }, [
-        h("div", { fontSize: "40px", fontWeight: 600, lineHeight: 1.15, maxWidth: "1000px",
-          direction: card.isAr ? "rtl" : "ltr", textAlign: card.isAr ? "right" : "left" }, card.headline),
+      // Main: headline + big value (right-aligned for Arabic)
+      h("div", { display: "flex", flexDirection: "column", alignItems: ar ? "flex-end" : "flex-start" }, [
+        h("div", { fontSize: "40px", fontWeight: 600, lineHeight: 1.15, maxWidth: "1040px",
+          textAlign: ar ? "right" : "left" }, headline),
         h("div", { display: "flex", alignItems: "flex-end", gap: "18px", marginTop: "20px",
-          flexDirection: card.isAr ? "row-reverse" : "row" }, [
-          h("div", { fontSize: `${bigSize}px`, fontWeight: 600, lineHeight: 1, direction: "ltr", fontFamily: "IBM Plex Sans" }, card.big),
+          flexDirection: ar ? "row-reverse" : "row" }, [
+          h("div", { fontSize: `${bigSize}px`, fontWeight: 600, lineHeight: 1, fontFamily: "IBM Plex Sans" }, card.big),
           card.unit ? h("div", { fontSize: "40px", color: C.muted, paddingBottom: "16px" }, card.unit) : null,
         ].filter(Boolean)),
       ]),
-      // Footer: sub-label · updated
-      h("div", { display: "flex", alignItems: "center", justifyContent: "space-between" }, [
-        h("div", { fontSize: "30px", fontWeight: 600, color: C.accent,
-          direction: card.isAr ? "rtl" : "ltr" }, card.sub),
-        h("div", { fontSize: "22px", color: C.muted, direction: "ltr", fontFamily: "IBM Plex Sans" }, card.updated ?? ""),
+      // Footer: sub-label (right for Arabic) · updated
+      h("div", { display: "flex", alignItems: "center", justifyContent: "space-between",
+        flexDirection: ar ? "row-reverse" : "row" }, [
+        h("div", { fontSize: "30px", fontWeight: 600, color: C.accent }, sub),
+        h("div", { fontSize: "22px", color: C.muted, fontFamily: "IBM Plex Sans" }, card.updated ?? ""),
       ]),
     ],
   );
