@@ -28,5 +28,11 @@ const display =
     }
   </div>
   {sub && <div class="muted" style="font-size:var(--step--1)">{sub}</div>}
-  {href && <a href={href} style="font-size:var(--step--1)">{detailsLabel}</a>}
+  {
+    href && (
+      <a href={href} style="font-size:var(--step--1)" data-umami-event="card-details" data-umami-event-card={label}>
+        {detailsLabel}
+      </a>
+    )
+  }
 </div>

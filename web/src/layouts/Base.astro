@@ -27,6 +27,15 @@ const {
   jsonLd,
 } = Astro.props;
 const site = "https://naharda.com";
+// Cookieless analytics (add-analytics). Resolved at runtime so the container's
+// env vars take effect; absent → the script is omitted entirely (safe no-op
+// until Umami is provisioned).
+const runtimeEnv = (k: string): string | undefined =>
+  typeof process !== "undefined" ? process.env[k] : undefined;
+const umamiSrc =
+  runtimeEnv("PUBLIC_UMAMI_SRC") ?? import.meta.env.PUBLIC_UMAMI_SRC;
+const umamiId =
+  runtimeEnv("PUBLIC_UMAMI_WEBSITE_ID") ?? import.meta.env.PUBLIC_UMAMI_WEBSITE_ID;
 const isAr = lang === "ar";
 const brand = isAr ? "نهاردة" : "Naharda";
 const footer = isAr
@@ -77,6 +86,11 @@ const footer = isAr
         />
       )
     }
+    {
+      umamiSrc && umamiId && (
+        <script defer src={umamiSrc} data-website-id={umamiId} />
+      )
+    }
   </head>
   <body>
     <header class="wrap" style="display:flex;align-items:center;justify-content:space-between;padding:var(--sp-3) 0;">
@@ -85,10 +99,10 @@ const footer = isAr
       </a>
       <nav style="display:flex;gap:var(--sp-2);align-items:center;font-size:var(--step--1);">
         <a href="#api">API</a>
-        <a href={lang === "ar" ? enPath : (arPath ?? "/ar")} hreflang={lang === "ar" ? "en" : "ar-EG"}>
+        <a href={lang === "ar" ? enPath : (arPath ?? "/ar")} hreflang={lang === "ar" ? "en" : "ar-EG"} data-umami-event="lang-toggle">
           {lang === "ar" ? "EN" : "ع"}
         </a>
-        <button id="theme" class="tag" type="button" aria-label="Toggle theme" style="cursor:pointer;background:none;">◐</button>
+        <button id="theme" class="tag" type="button" aria-label="Toggle theme" data-umami-event="theme-toggle" style="cursor:pointer;background:none;">◐</button>
       </nav>
     </header>
 
@@ -99,9 +113,9 @@ const footer = isAr
     <footer class="wrap muted" style="font-size:var(--step--1);padding:var(--sp-4) 0;border-top:1px solid var(--border);margin-top:var(--sp-5);">
       <p>
         <strong>{brand}</strong> {footer.tagline}
-        <a href="/status">{footer.status}</a> ·
-        <a href="/docs">{footer.docs}</a> ·
-        <a href={footer.privacyHref}>{footer.privacy}</a>
+        <a href="/status" data-umami-event="nav-status">{footer.status}</a> ·
+        <a href="/docs" data-umami-event="nav-docs">{footer.docs}</a> ·
+        <a href={footer.privacyHref} data-umami-event="nav-privacy">{footer.privacy}</a>
       </p>
     </footer>
 
