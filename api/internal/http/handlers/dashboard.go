@@ -43,6 +43,31 @@ func (h *Handlers) Signups(w http.ResponseWriter, r *http.Request) {
 	writeOK(w, http.StatusCreated)
 }
 
+// DeleteSignup erases a captured email on request (GDPR right-to-erasure, §12).
+// It always responds 200 regardless of whether the address existed, so the
+// endpoint cannot be used to enumerate which emails are stored (anti-enumeration).
+func (h *Handlers) DeleteSignup(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		Email string `json:"email"`
+	}
+	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 4<<10)).Decode(&body); err != nil {
+		respond.Error(w, http.StatusBadRequest, "invalid_body", "Malformed request body.", 0)
+		return
+	}
+	addr, err := mail.ParseAddress(strings.TrimSpace(body.Email))
+	if err != nil {
+		respond.Error(w, http.StatusBadRequest, "invalid_email", "A valid email is required.", 0)
+		return
+	}
+	// Best-effort delete; existence is never revealed. Only a storage failure
+	// (DB unreachable) surfaces an error.
+	if err := h.store.DeleteSignup(r.Context(), strings.ToLower(addr.Address)); err != nil {
+		respond.Error(w, http.StatusServiceUnavailable, "unavailable", "Could not process deletion.", 30)
+		return
+	}
+	writeOK(w, http.StatusOK)
+}
+
 // Stats returns public aggregate metrics (§10). 5-minute cache.
 func (h *Handlers) Stats(w http.ResponseWriter, r *http.Request) {
 	st, err := h.store.GetStats(r.Context())

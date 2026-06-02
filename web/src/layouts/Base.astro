@@ -35,12 +35,16 @@ const footer = isAr
         "— اللي بيحصل في مصر النهاردة. البيانات كلها معاها المصدر ووقت الجلب؛ النسخة المجانية لغير الأغراض التجارية.",
       status: "الحالة",
       docs: "الـ Docs",
+      privacy: "الخصوصية",
+      privacyHref: "/ar/privacy",
     }
   : {
       tagline:
         "— what's happening in Egypt today. Data carries source + fetch time; free tier non-commercial.",
       status: "Status",
       docs: "API docs",
+      privacy: "Privacy",
+      privacyHref: "/privacy",
     };
 ---
 
@@ -96,7 +100,8 @@ const footer = isAr
       <p>
         <strong>{brand}</strong> {footer.tagline}
         <a href="/status">{footer.status}</a> ·
-        <a href="/docs">{footer.docs}</a>
+        <a href="/docs">{footer.docs}</a> ·
+        <a href={footer.privacyHref}>{footer.privacy}</a>
       </p>
     </footer>
 

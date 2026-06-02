@@ -118,6 +118,13 @@
         "summary": "Capture an email signup",
         "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "required": ["email"], "properties": { "email": { "type": "string", "format": "email" } } }, "example": { "email": "dev@example.com" } } } },
         "responses": { "200": { "$ref": "#/components/responses/Envelope" }, "400": { "$ref": "#/components/responses/Error" } }
+      },
+      "delete": {
+        "tags": ["meta"],
+        "summary": "Erase a captured email (GDPR)",
+        "description": "Right-to-erasure. Always responds 200 regardless of whether the address existed (anti-enumeration).",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "required": ["email"], "properties": { "email": { "type": "string", "format": "email" } } }, "example": { "email": "dev@example.com" } } } },
+        "responses": { "200": { "description": "Deletion processed (existence not revealed)" }, "400": { "$ref": "#/components/responses/Error" } }
       }
     },
     "/v1/stats": {

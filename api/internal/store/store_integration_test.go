@@ -170,3 +170,26 @@ func TestMaintainUsageLog(t *testing.T) {
 		t.Fatalf("maintain idempotent: %v", err)
 	}
 }
+
+func TestDeleteSignup(t *testing.T) {
+	st := testStore(t)
+	ctx := context.Background()
+	email := "delete-me@example.com"
+	if err := st.InsertSignup(ctx, email, true, "en"); err != nil {
+		t.Fatal(err)
+	}
+	if err := st.DeleteSignup(ctx, email); err != nil {
+		t.Fatalf("delete: %v", err)
+	}
+	var n int
+	if err := st.Pool.QueryRow(ctx, `SELECT count(*) FROM signups WHERE email=$1`, email).Scan(&n); err != nil {
+		t.Fatal(err)
+	}
+	if n != 0 {
+		t.Errorf("expected row deleted, got %d", n)
+	}
+	// Idempotent: deleting again is not an error.
+	if err := st.DeleteSignup(ctx, email); err != nil {
+		t.Fatalf("idempotent delete: %v", err)
+	}
+}

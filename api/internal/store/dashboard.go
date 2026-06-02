@@ -20,6 +20,17 @@ func (s *Store) InsertSignup(ctx context.Context, email string, consent bool, lo
 	return err
 }
 
+// DeleteSignup removes a captured email (GDPR right-to-erasure, §12). It is
+// idempotent: deleting a non-existent email is not an error, so callers can
+// always return 200 without revealing whether the address existed.
+func (s *Store) DeleteSignup(ctx context.Context, email string) error {
+	if s == nil || s.Pool == nil {
+		return errNoDB
+	}
+	_, err := s.Pool.Exec(ctx, `DELETE FROM signups WHERE email = $1`, email)
+	return err
+}
+
 // Stats is the public aggregate exposed at /v1/stats (PII-free).
 type Stats struct {
 	RequestsServedTotal int64      `json:"requests_served_total"`
