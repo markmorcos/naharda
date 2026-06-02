@@ -30,7 +30,7 @@ services:
       MODE: all
       PORT: "8080"
       DATABASE_URL: postgres://naharda:naharda@postgres:5432/naharda?sslmode=disable
-      SENSITIVE_SOURCES_ENABLED: "false"
+      SENSITIVE_SOURCES_ENABLED: "true"
       CORS_ORIGINS: "*"
       # ALERT_WEBHOOK_URL: ""   # optional data-quality alerts
     ports:

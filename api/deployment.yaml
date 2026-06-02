@@ -16,6 +16,9 @@ services:
         value: "all"
       - name: PORT
         value: "8080"
+      # 🟡 parallel FX + retail gold (register-parallel-fx-sources, §16 #1 sign-off).
+      - name: SENSITIVE_SOURCES_ENABLED
+        value: "true"
       - name: DATABASE_URL
         valueFrom:
           secretKeyRef:
