@@ -37,5 +37,6 @@ func Run(ctx context.Context, st *store.Store, alerter *quality.Alerter, log *sl
 			log.Warn("fx insert failed", "quote", quote, "err", err)
 		}
 	}
+	_ = st.Notify(ctx, "naharda_updates", `{"family":"fx"}`)
 	log.Info("fx ingest complete", "quotes", len(rates), "held", held)
 }

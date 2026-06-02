@@ -19,6 +19,7 @@ type Config struct {
 	RatePerDay       int      // IP rate limit per day (§9.3)
 	CORSOrigins      []string // allowed CORS origins ("*" = all)
 	SensitiveEnabled bool     // 🟡 parallel FX / retail gold gate (§8, §16 #1) — default false
+	StreamMaxConns   int      // max concurrent SSE connections per instance (add-live-updates)
 }
 
 // Load reads configuration from the environment and validates it.
@@ -32,6 +33,7 @@ func Load() (Config, error) {
 		RatePerDay:       getenvInt("RATE_PER_DAY", 1000),
 		CORSOrigins:      splitCSV(getenv("CORS_ORIGINS", "*")),
 		SensitiveEnabled: getenvBool("SENSITIVE_SOURCES_ENABLED", false),
+		StreamMaxConns:   getenvInt("STREAM_MAX_CONNS", 500),
 	}
 	switch c.Mode {
 	case "api", "ingest", "all":

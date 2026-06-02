@@ -18,7 +18,7 @@ func noDB(t *testing.T) *Handlers {
 	if err != nil {
 		t.Fatal(err)
 	}
-	return New(st, false)
+	return New(st, false, nil)
 }
 
 func TestCitiesHandler(t *testing.T) {

@@ -44,5 +44,6 @@ func Run(ctx context.Context, st *store.Store, alerter *quality.Alerter, log *sl
 			log.Warn("gold insert failed", "karat", k, "err", err)
 		}
 	}
+	_ = st.Notify(ctx, "naharda_updates", `{"family":"gold"}`)
 	log.Info("gold ingest complete", "spot_usd_oz", spotUSD, "usd_egp", usdEGP)
 }
