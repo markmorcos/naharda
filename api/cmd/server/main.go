@@ -84,10 +84,10 @@ func main() {
 		alerter := quality.NewAlerter(cfg.AlertWebhookURL, cfg.TelegramBotToken, cfg.TelegramChatID, logger)
 		runFX := func() { fxingest.Run(context.Background(), st, alerter, logger) }
 		runGold := func() { goldingest.Run(context.Background(), st, alerter, logger) }
-		if err := sch.Register("@every 1h", "fx-official", runFX); err != nil {
+		if err := sch.Register(cfg.FXInterval, "fx-official", runFX); err != nil {
 			logger.Error("register fx job", "err", err)
 		}
-		if err := sch.Register("@every 15m", "gold-world", runGold); err != nil {
+		if err := sch.Register(cfg.GoldInterval, "gold-world", runGold); err != nil {
 			logger.Error("register gold job", "err", err)
 		}
 		// 🟡 sensitive ingest — only when the flag is on AND sources are registered (§8, §16 #1).
@@ -95,10 +95,10 @@ func main() {
 		if cfg.SensitiveEnabled {
 			runParallel = func() { sensitive.ParallelFXRun(context.Background(), st, alerter, logger) }
 			runRetail = func() { sensitive.RetailGoldRun(context.Background(), st, alerter, logger) }
-			if err := sch.Register("@every 30m", "fx-parallel", runParallel); err != nil {
+			if err := sch.Register(cfg.SensitiveInterval, "fx-parallel", runParallel); err != nil {
 				logger.Error("register parallel job", "err", err)
 			}
-			if err := sch.Register("@every 30m", "gold-retail", runRetail); err != nil {
+			if err := sch.Register(cfg.SensitiveInterval, "gold-retail", runRetail); err != nil {
 				logger.Error("register retail job", "err", err)
 			}
 			logger.Warn("sensitive sources ENABLED (🟡 parallel FX + retail gold)")
