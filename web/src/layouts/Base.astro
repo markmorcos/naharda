@@ -27,6 +27,21 @@ const {
   jsonLd,
 } = Astro.props;
 const site = "https://naharda.com";
+const isAr = lang === "ar";
+const brand = isAr ? "نهاردة" : "Naharda";
+const footer = isAr
+  ? {
+      tagline:
+        "— اللي بيحصل في مصر النهاردة. البيانات كلها معاها المصدر ووقت الجلب؛ النسخة المجانية لغير الأغراض التجارية.",
+      status: "الحالة",
+      docs: "الـ Docs",
+    }
+  : {
+      tagline:
+        "— what's happening in Egypt today. Data carries source + fetch time; free tier non-commercial.",
+      status: "Status",
+      docs: "API docs",
+    };
 ---
 
 <!doctype html>
@@ -79,10 +94,9 @@ const site = "https://naharda.com";
 
     <footer class="wrap muted" style="font-size:var(--step--1);padding:var(--sp-4) 0;border-top:1px solid var(--border);margin-top:var(--sp-5);">
       <p>
-        <strong>Naharda</strong> — what's happening in Egypt today.
-        Data carries source + fetch time; free tier non-commercial.
-        <a href="https://status.naharda.com">Status</a> ·
-        <a href="#api">API</a>
+        <strong>{brand}</strong> {footer.tagline}
+        <a href="/status">{footer.status}</a> ·
+        <a href="/docs">{footer.docs}</a>
       </p>
     </footer>
 

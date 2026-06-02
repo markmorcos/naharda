@@ -8,7 +8,14 @@ const byKarat = (k: number) =>
   gold?.data?.world_derived?.find((g: any) => g.karat === k)?.value_egp ?? null;
 const g21 = byKarat(21);
 const updated = gold?.meta?.cached_at
-  ? new Date(gold.meta.cached_at).toUTCString()
+  ? new Intl.DateTimeFormat("ar-EG-u-nu-latn", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      timeZone: "Africa/Cairo",
+    }).format(new Date(gold.meta.cached_at))
   : "غير متاح";
 
 const jsonLd = {
