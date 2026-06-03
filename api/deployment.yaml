@@ -1,7 +1,7 @@
 # Values consumed by the infrastructure Helm chart via scripts/build.sh +
 # scripts/deploy.sh (project.md §11). Schema mirrors eventlane's backend/deployment.yaml.
 # Deployment resolves to naharda-api-deployment in namespace `naharda`.
-version: 0.6.0
+version: 0.6.1
 
 namespace: naharda
 project: api
