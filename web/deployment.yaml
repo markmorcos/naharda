@@ -1,7 +1,7 @@
 # Values for the infrastructure Helm chart (project.md §11). Mirrors the
 # {version, namespace, project, services} schema. Resolves to
 # naharda-web-deployment in namespace `naharda`.
-version: 0.6.0
+version: 0.6.1
 
 namespace: naharda
 project: web
