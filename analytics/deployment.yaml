@@ -18,9 +18,11 @@ project: analytics
 
 services:
   - name: analytics
-    # Official Umami image (Postgres flavor). Pinned by digest/tag at deploy.
-    image: ghcr.io/umami-software/umami
-    tag: postgresql-latest
+    # Built from analytics/Dockerfile (a passthrough of the official Umami
+    # postgresql image) and published to our namespace, so it flows through the
+    # same build/merge/deploy path as api/web. No `tag` → the chart deploys
+    # ghcr.io/markmorcos/naharda-analytics:naharda-latest.
+    image: ghcr.io/markmorcos/naharda-analytics
     context: analytics
     port: 3000
     env:
