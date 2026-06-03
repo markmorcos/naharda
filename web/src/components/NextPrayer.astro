@@ -1,0 +1,154 @@
+---
+// Shows the NEXT prayer for Cairo relative to the current time, rather than a
+// fixed Fajr. The page is SSR/CDN-cached, so the authoritative computation runs
+// on the client (against Africa/Cairo time) and ticks every 30s; the SSR render
+// is a best-effort fallback for no-JS. After Isha it rolls to tomorrow's Fajr
+// (reusing today's Fajr time — prayer times drift ~1 min/day, well within the
+// card's resolution).
+interface Props {
+  timings?: Record<string, string> | null;
+  lang?: "en" | "ar";
+  href?: string;
+}
+const { timings = null, lang = "en", href } = Astro.props;
+const isAr = lang === "ar";
+
+const ORDER = ["Fajr", "Dhuhr", "Asr", "Maghrib", "Isha"];
+const NAMES_AR: Record<string, string> = {
+  Fajr: "الفجر",
+  Dhuhr: "الظهر",
+  Asr: "العصر",
+  Maghrib: "المغرب",
+  Isha: "العشاء",
+};
+
+const toMin = (v?: string | null): number | null => {
+  if (!v) return null;
+  const m = /(\d{1,2}):(\d{2})/.exec(v);
+  return m ? Number(m[1]) * 60 + Number(m[2]) : null;
+};
+const pad = (n: number) => String(n).padStart(2, "0");
+const fmtDelta = (d: number) => {
+  const h = Math.floor(d / 60);
+  const m = d % 60;
+  if (isAr) return h > 0 ? `بعد ${h} س ${m} د` : `بعد ${m} د`;
+  return h > 0 ? `in ${h}h ${m}m` : `in ${m}m`;
+};
+
+// Best-effort "now in Cairo" at render time (the client recomputes live).
+const nowMin =
+  toMin(
+    new Intl.DateTimeFormat("en-GB", {
+      timeZone: "Africa/Cairo",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    }).format(new Date()),
+  ) ?? 0;
+
+function computeNext(t: Record<string, string> | null, now: number) {
+  if (!t) return null;
+  const items = ORDER.map((p) => ({ p, m: toMin(t[p]) })).filter(
+    (x): x is { p: string; m: number } => x.m !== null,
+  );
+  if (items.length === 0) return null;
+  let next = items.find((x) => x.m > now);
+  let tomorrow = false;
+  if (!next) {
+    next = items[0];
+    tomorrow = true;
+  }
+  const delta = tomorrow ? 1440 - now + next.m : next.m - now;
+  return { name: next.p, min: next.m, delta };
+}
+
+const next = computeNext(timings, nowMin);
+const cairo = isAr ? "القاهرة" : "Cairo";
+const label = next ? `${isAr ? NAMES_AR[next.name] : next.name} · ${cairo}` : `${isAr ? "الصلاة القادمة" : "Next prayer"} · ${cairo}`;
+const timeStr = next ? `${pad(Math.floor(next.min / 60))}:${pad(next.min % 60)}` : "—";
+const sub = next ? fmtDelta(next.delta) : isAr ? "موعد الصلاة القادمة" : "next prayer";
+const detailsLabel = isAr ? "تفاصيل ←" : "details →";
+const data = JSON.stringify(timings ?? {});
+---
+
+<div class="card" data-next-prayer data-timings={data} data-lang={lang}>
+  <div class="muted" style="font-size:var(--step--1)" data-np="label">{label}</div>
+  <div class="num" style="font-size:var(--step-2);margin:.15em 0" data-np="time">{timeStr}</div>
+  <div class="muted" style="font-size:var(--step--1)" data-np="sub">{sub}</div>
+  {
+    href && (
+      <a href={href} style="font-size:var(--step--1)" data-umami-event="card-details" data-umami-event-card="next-prayer">
+        {detailsLabel}
+      </a>
+    )
+  }
+</div>
+
+<script>
+  // Recompute the next Cairo prayer on the client so cached pages stay correct.
+  (function () {
+    const ORDER = ["Fajr", "Dhuhr", "Asr", "Maghrib", "Isha"];
+    const NAMES_AR: Record<string, string> = {
+      Fajr: "الفجر",
+      Dhuhr: "الظهر",
+      Asr: "العصر",
+      Maghrib: "المغرب",
+      Isha: "العشاء",
+    };
+    const toMin = (v?: string | null): number | null => {
+      if (!v) return null;
+      const m = /(\d{1,2}):(\d{2})/.exec(v);
+      return m ? Number(m[1]) * 60 + Number(m[2]) : null;
+    };
+    const pad = (n: number) => String(n).padStart(2, "0");
+    function nowCairoMin(): number {
+      const s = new Intl.DateTimeFormat("en-GB", {
+        timeZone: "Africa/Cairo",
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false,
+      }).format(new Date());
+      return toMin(s) ?? 0;
+    }
+    function fmtDelta(d: number, ar: boolean): string {
+      const h = Math.floor(d / 60);
+      const m = d % 60;
+      if (ar) return h > 0 ? `بعد ${h} س ${m} د` : `بعد ${m} د`;
+      return h > 0 ? `in ${h}h ${m}m` : `in ${m}m`;
+    }
+    function update(card: Element) {
+      let t: Record<string, string>;
+      try {
+        t = JSON.parse(card.getAttribute("data-timings") || "{}");
+      } catch {
+        return;
+      }
+      const ar = card.getAttribute("data-lang") === "ar";
+      const now = nowCairoMin();
+      const items = ORDER.map((p) => ({ p, m: toMin(t[p]) })).filter(
+        (x): x is { p: string; m: number } => x.m !== null,
+      );
+      if (!items.length) return;
+      let next = items.find((x) => x.m > now);
+      let tomorrow = false;
+      if (!next) {
+        next = items[0];
+        tomorrow = true;
+      }
+      const delta = tomorrow ? 1440 - now + next.m : next.m - now;
+      const name = ar ? NAMES_AR[next.p] : next.p;
+      const cairo = ar ? "القاهرة" : "Cairo";
+      const lbl = card.querySelector('[data-np="label"]');
+      const tEl = card.querySelector('[data-np="time"]');
+      const subEl = card.querySelector('[data-np="sub"]');
+      if (lbl) lbl.textContent = `${name} · ${cairo}`;
+      if (tEl) tEl.textContent = `${pad(Math.floor(next.m / 60))}:${pad(next.m % 60)}`;
+      if (subEl) subEl.textContent = fmtDelta(delta, ar);
+    }
+    function tick() {
+      document.querySelectorAll("[data-next-prayer]").forEach(update);
+    }
+    tick();
+    setInterval(tick, 30000);
+  })();
+</script>

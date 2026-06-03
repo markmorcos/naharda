@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"math"
 	"strings"
+	"time"
 
 	"github.com/markmorcos/naharda/api/internal/store"
 )
@@ -27,6 +28,7 @@ func BuildSnapshot(ctx context.Context, st *store.Store) ([]byte, error) {
 	return json.Marshal(map[string]any{
 		"fx":   map[string]any{"official": official},
 		"gold": map[string]any{"world_derived": gold},
+		"ts":   time.Now().UTC().Format(time.RFC3339),
 	})
 }
 
