@@ -1,6 +1,7 @@
 ---
 import Base from "../layouts/Base.astro";
 import RateCard from "../components/RateCard.astro";
+import NextPrayer from "../components/NextPrayer.astro";
 import EmailCapture from "../components/EmailCapture.astro";
 import StatsStrip from "../components/StatsStrip.astro";
 import {
@@ -31,7 +32,7 @@ const gold21 =
 const gas92 =
   fuel?.data?.find((f: any) => f.product === "gasoline-92")?.price_egp ?? null;
 const temp = weather?.data?.weather?.temperature_c ?? null;
-const fajr = prayer?.data?.prayer_times?.timings?.Fajr ?? null;
+const prayerTimings = prayer?.data?.prayer_times?.timings ?? null;
 const hijri = cal?.data?.hijri ?? null;
 const updated = fx?.meta?.cached_at
   ? new Date(fx.meta.cached_at).toUTCString()
@@ -61,16 +62,16 @@ const jsonLd = {
       <span class="muted" style="font-size:var(--step-1)">EGP</span>
     </p>
     <p class="muted" style="margin:0">
-      official{hasParallel ? ` · parallel ${parallelRange}` : ""} · updated {updated}
+      official{hasParallel ? ` · parallel ${parallelRange}` : ""} · updated <span id="live-updated">{updated}</span>
     </p>
   </section>
 
   <section class="grid">
     <RateCard label="USD → EGP (official)" value={usd} unit="EGP" sub={hasParallel ? `parallel ${parallelRange}` : undefined} href="/usd-to-egp" />
-    <RateCard label="Gold 21k" value={gold21} unit="EGP/g" sub="world-derived" href="/gold-price-egypt" />
+    <RateCard label="Gold 21k" value={gold21} valueId="live-gold21" unit="EGP/g" sub="world-derived" href="/gold-price-egypt" />
     <RateCard label="Gasoline 92" value={gas92} unit="EGP/L" sub="official (EGPC)" href="/fuel-prices-egypt" />
     <RateCard label="Weather · Cairo" value={temp} unit="°C" sub="now" href="/weather/cairo" />
-    <RateCard label="Fajr · Cairo" value={fajr} sub="prayer time today" href="/prayer-times/cairo" />
+    <NextPrayer timings={prayerTimings} lang="en" href="/prayer-times/cairo" />
     <RateCard label="Hijri date" value={hijri} sub="Umm al-Qura" href="/hijri-date" />
   </section>
 
@@ -139,15 +140,33 @@ const jsonLd = {
       function apply(raw) {
         let d;
         try { d = JSON.parse(raw); } catch { return; }
+        let changed = false;
         const usd = d && d.fx && d.fx.official && d.fx.official.usd;
         const el = document.getElementById("live-usd");
         if (el && typeof usd === "number") {
           const next = usd.toFixed(2);
           if (el.textContent !== next) {
             countUp(el, parseFloat(el.textContent), usd);
-            pulse();
+            changed = true;
           }
         }
+        const gold21 = d && d.gold && Array.isArray(d.gold.world_derived)
+          ? (d.gold.world_derived.find((g) => g && g.karat === 21) || {}).value_egp
+          : undefined;
+        const gEl = document.getElementById("live-gold21");
+        if (gEl && typeof gold21 === "number") {
+          const next = gold21.toLocaleString(undefined, { maximumFractionDigits: 2 });
+          if (gEl.textContent !== next) {
+            gEl.textContent = next;
+            changed = true;
+          }
+        }
+        const upEl = document.getElementById("live-updated");
+        if (upEl && d && d.ts) {
+          const next = new Date(d.ts).toUTCString();
+          if (upEl.textContent !== next) upEl.textContent = next;
+        }
+        if (changed) pulse();
       }
       function connect() {
         es = new EventSource(apiBase + "/v1/stream");

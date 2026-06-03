@@ -1,6 +1,7 @@
 ---
 import Base from "../../layouts/Base.astro";
 import RateCard from "../../components/RateCard.astro";
+import NextPrayer from "../../components/NextPrayer.astro";
 import EmailCapture from "../../components/EmailCapture.astro";
 import StatsStrip from "../../components/StatsStrip.astro";
 import {
@@ -31,7 +32,7 @@ const gold21 =
 const gas92 =
   fuel?.data?.find((f: any) => f.product === "gasoline-92")?.price_egp ?? null;
 const temp = weather?.data?.weather?.temperature_c ?? null;
-const fajr = prayer?.data?.prayer_times?.timings?.Fajr ?? null;
+const prayerTimings = prayer?.data?.prayer_times?.timings ?? null;
 const hijri = cal?.data?.hijri ?? null;
 const updated = fx?.meta?.cached_at
   ? new Intl.DateTimeFormat("ar-EG-u-nu-latn", {
@@ -69,16 +70,16 @@ const jsonLd = {
       <span class="muted" style="font-size:var(--step-1)">جنيه</span>
     </p>
     <p class="muted" style="margin:0">
-      رسمي{hasParallel ? ` · الموازي ${parallelRange}` : ""} · آخر تحديث {updated}
+      رسمي{hasParallel ? ` · الموازي ${parallelRange}` : ""} · آخر تحديث <span id="live-updated">{updated}</span>
     </p>
   </section>
 
   <section class="grid">
     <RateCard label="الدولار (رسمي)" value={usd} unit="جنيه" sub={hasParallel ? `الموازي ${parallelRange}` : undefined} href="/ar/usd-to-egp" detailsLabel="تفاصيل ←" />
-    <RateCard label="ذهب عيار 21" value={gold21} unit="جنيه/جرام" sub="عالمي" href="/ar/gold-price-egypt" detailsLabel="تفاصيل ←" />
+    <RateCard label="ذهب عيار 21" value={gold21} valueId="live-gold21" unit="جنيه/جرام" sub="عالمي" href="/ar/gold-price-egypt" detailsLabel="تفاصيل ←" />
     <RateCard label="بنزين 92" value={gas92} unit="جنيه/لتر" sub="رسمي (هيئة البترول)" href="/ar/fuel-prices-egypt" detailsLabel="تفاصيل ←" />
     <RateCard label="الطقس · القاهرة" value={temp} unit="°م" sub="دلوقتي" href="/ar/weather/cairo" detailsLabel="تفاصيل ←" />
-    <RateCard label="الفجر · القاهرة" value={fajr} sub="موعد الصلاة النهاردة" href="/ar/prayer-times/cairo" detailsLabel="تفاصيل ←" />
+    <NextPrayer timings={prayerTimings} lang="ar" href="/ar/prayer-times/cairo" />
     <RateCard label="التاريخ الهجري" value={hijri} sub="أم القرى" href="/ar/hijri-date" detailsLabel="تفاصيل ←" />
   </section>
 
@@ -146,15 +147,36 @@ const jsonLd = {
       function apply(raw) {
         let d;
         try { d = JSON.parse(raw); } catch { return; }
+        let changed = false;
         const usd = d && d.fx && d.fx.official && d.fx.official.usd;
         const el = document.getElementById("live-usd");
         if (el && typeof usd === "number") {
           const next = usd.toFixed(2);
           if (el.textContent !== next) {
             countUp(el, parseFloat(el.textContent), usd);
-            pulse();
+            changed = true;
           }
         }
+        const gold21 = d && d.gold && Array.isArray(d.gold.world_derived)
+          ? (d.gold.world_derived.find((g) => g && g.karat === 21) || {}).value_egp
+          : undefined;
+        const gEl = document.getElementById("live-gold21");
+        if (gEl && typeof gold21 === "number") {
+          const next = gold21.toLocaleString(undefined, { maximumFractionDigits: 2 });
+          if (gEl.textContent !== next) {
+            gEl.textContent = next;
+            changed = true;
+          }
+        }
+        const upEl = document.getElementById("live-updated");
+        if (upEl && d && d.ts) {
+          const next = new Intl.DateTimeFormat("ar-EG-u-nu-latn", {
+            day: "numeric", month: "long", year: "numeric",
+            hour: "2-digit", minute: "2-digit", timeZone: "Africa/Cairo",
+          }).format(new Date(d.ts));
+          if (upEl.textContent !== next) upEl.textContent = next;
+        }
+        if (changed) pulse();
       }
       const es = new EventSource(apiBase + "/v1/stream");
       es.addEventListener("snapshot", (e) => apply(e.data));
