@@ -31,5 +31,9 @@ services:
         value: "98a94b0f-de74-449a-977c-0d4d64c394b5"
     ingress:
       host: naharda.com
+      # naharda.com has a www DNS record, so include www.naharda.com in the cert
+      # and enable the www<->apex redirect. api/analytics have no www record and
+      # intentionally leave this unset.
+      www: true
       path: /?(.*)
       pathType: ImplementationSpecific
