@@ -23,6 +23,12 @@ services:
       # Public API base used by client-side calls (email capture).
       - name: PUBLIC_API_BASE
         value: "https://api.naharda.com"
+      # Cookieless Umami analytics (add-analytics). Base.astro injects the
+      # tracking script only when both are set; read at runtime (SSR).
+      - name: PUBLIC_UMAMI_SRC
+        value: "https://analytics.naharda.com/script.js"
+      - name: PUBLIC_UMAMI_WEBSITE_ID
+        value: "98a94b0f-de74-449a-977c-0d4d64c394b5"
     ingress:
       host: naharda.com
       path: /?(.*)
