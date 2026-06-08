@@ -24,4 +24,10 @@ export default defineConfig({
     }),
   ],
   server: { port: 4321, host: true },
+  // Inline the small (~8 KiB) critical CSS into each document instead of
+  // emitting a render-blocking <link>. Removes a request from the critical
+  // path and lets the browser discover @font-face rules during HTML parse
+  // rather than after a separate CSS round-trip (Lighthouse: render-blocking
+  // requests + network dependency tree).
+  build: { inlineStylesheets: "always" },
 });
