@@ -20,7 +20,7 @@ if (!intent) throw new Error(`Unknown intent slug: ${slug}`);
 const isAr = lang === "ar";
 const t = isAr ? intent.ar : intent.en;
 const site = "https://naharda.com";
-const enPath = `/${intent.slug}`;
+const enPath = `/en/${intent.slug}`;
 const arPath = `/ar/${intent.slug}`;
 const canonicalPath = isAr ? arPath : enPath;
 
@@ -93,7 +93,7 @@ const jsonLd = [
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
     itemListElement: [
-      { "@type": "ListItem", position: 1, name: isAr ? "الرئيسية" : "Home", item: site + (isAr ? "/ar" : "/") },
+      { "@type": "ListItem", position: 1, name: isAr ? "الرئيسية" : "Home", item: site + (isAr ? "/ar" : "/en") },
       { "@type": "ListItem", position: 2, name: t.crumb, item: site + canonicalPath },
     ],
   },
@@ -105,7 +105,7 @@ const apiCurl =
     : "curl https://api.naharda.com/v1/fx";
 const apiLabel = isAr ? "هاتها عبر API" : "Get it via API";
 const trendLabel = isAr ? "آخر 30 يوم" : "Last 30 days";
-const homeHref = isAr ? "/ar" : "/";
+const homeHref = isAr ? "/ar" : "/en";
 const homeLabel = isAr ? "الرئيسية" : "Home";
 ---
 

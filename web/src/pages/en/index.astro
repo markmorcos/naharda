@@ -35,95 +35,88 @@ const temp = weather?.data?.weather?.temperature_c ?? null;
 const prayerTimings = prayer?.data?.prayer_times?.timings ?? null;
 const hijri = cal?.data?.hijri ?? null;
 const updated = fx?.meta?.cached_at
-  ? new Intl.DateTimeFormat("ar-EG-u-nu-latn", {
-      day: "numeric",
-      month: "long",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-      timeZone: "Africa/Cairo",
-    }).format(new Date(fx.meta.cached_at))
-  : "غير متاح";
+  ? new Date(fx.meta.cached_at).toUTCString()
+  : "unavailable";
 
 const jsonLd = {
   "@context": "https://schema.org",
   "@type": "WebSite",
   name: "Naharda",
-  url: "https://naharda.com/ar",
+  url: "https://naharda.com",
+  description: "Live Egypt data: FX, gold, fuel, prayer times, weather.",
 };
 ---
 
 <Base
-  title="الدولار بكام النهاردة؟ — أسعار مصر دلوقتي | Naharda"
-  description="كل اللي بيحصل في مصر النهاردة في مكان واحد: الدولار بكام، سعر الذهب، البنزين، مواقيت الصلاة، والطقس — مجانًا ومن مصادر موثوقة، ومتاح كـ API."
-  lang="ar"
-  dir="rtl"
-  canonicalPath="/ar"
+  title="Naharda — what's happening in Egypt today"
+  description="Live Egyptian data in one place: the dollar today, gold prices, fuel, prayer times, weather — free, sourced, and available as a clean API."
+  canonicalPath="/en"
   enPath="/en"
   arPath="/ar"
   jsonLd={jsonLd}
 >
   <section style="padding:var(--sp-3) 0 var(--sp-4)">
-    <p class="muted" style="margin:0">الدولار النهاردة</p>
+    <p class="muted" style="margin:0">The dollar today</p>
     <p class="num delta-up" style="font-size:var(--hero);margin:.1em 0;line-height:1">
       <span id="live-usd" data-live="usd">{usd ? usd.toFixed(2) : "—"}</span>
-      <span class="muted" style="font-size:var(--step-1)">جنيه</span>
+      <span class="muted" style="font-size:var(--step-1)">EGP</span>
     </p>
     <p class="muted" style="margin:0">
-      رسمي{hasParallel ? ` · الموازي ${parallelRange}` : ""} · آخر تحديث <span id="live-updated">{updated}</span>
+      official{hasParallel ? ` · parallel ${parallelRange}` : ""} · updated <span id="live-updated">{updated}</span>
     </p>
   </section>
 
   <section class="grid">
-    <RateCard label="الدولار (رسمي)" value={usd} unit="جنيه" sub={hasParallel ? `الموازي ${parallelRange}` : undefined} href="/ar/usd-to-egp" detailsLabel="تفاصيل ←" />
-    <RateCard label="ذهب عيار 21" value={gold21} valueId="live-gold21" unit="جنيه/جرام" sub="عالمي" href="/ar/gold-21k" detailsLabel="تفاصيل ←" />
-    <RateCard label="بنزين 92" value={gas92} unit="جنيه/لتر" sub="رسمي (هيئة البترول)" href="/ar/fuel-prices-egypt" detailsLabel="تفاصيل ←" />
-    <RateCard label="الطقس · القاهرة" value={temp} unit="°م" sub="دلوقتي" href="/ar/weather/cairo" detailsLabel="تفاصيل ←" />
-    <NextPrayer timings={prayerTimings} lang="ar" href="/ar/prayer-times/cairo" />
-    <RateCard label="التاريخ الهجري" value={hijri} sub="أم القرى" href="/ar/hijri-date" detailsLabel="تفاصيل ←" />
+    <RateCard label="USD → EGP (official)" value={usd} unit="EGP" sub={hasParallel ? `parallel ${parallelRange}` : undefined} href="/en/usd-to-egp" />
+    <RateCard label="Gold 21k" value={gold21} valueId="live-gold21" unit="EGP/g" sub="world-derived" href="/en/gold-21k" />
+    <RateCard label="Gasoline 92" value={gas92} unit="EGP/L" sub="official (EGPC)" href="/en/fuel-prices-egypt" />
+    <RateCard label="Weather · Cairo" value={temp} unit="°C" sub="now" href="/en/weather/cairo" />
+    <NextPrayer timings={prayerTimings} lang="en" href="/en/prayer-times/cairo" />
+    <RateCard label="Hijri date" value={hijri} sub="Umm al-Qura" href="/en/hijri-date" />
   </section>
 
   <section style="padding:var(--sp-3) 0 0">
-    <h2 style="font-size:var(--step-1)">الأكثر بحثاً النهاردة</h2>
+    <h2 style="font-size:var(--step-1)">Popular today</h2>
     <nav class="muted" style="font-size:var(--step--1);display:flex;flex-wrap:wrap;gap:.4em var(--sp-2);margin-top:.4em">
-      <a href="/ar/usd-to-egp">الدولار</a>
-      <a href="/ar/black-market-dollar">الدولار السوق السودا</a>
-      <a href="/ar/eur-to-egp">اليورو</a>
-      <a href="/ar/sar-to-egp">الريال السعودي</a>
-      <a href="/ar/aed-to-egp">الدرهم</a>
-      <a href="/ar/kwd-to-egp">الدينار الكويتي</a>
-      <a href="/ar/gbp-to-egp">الإسترليني</a>
-      <a href="/ar/gold-18k">دهب 18</a>
-      <a href="/ar/gold-21k">دهب 21</a>
-      <a href="/ar/gold-24k">دهب 24</a>
+      <a href="/en/usd-to-egp">USD → EGP</a>
+      <a href="/en/black-market-dollar">Black-market dollar</a>
+      <a href="/en/eur-to-egp">EUR → EGP</a>
+      <a href="/en/sar-to-egp">SAR → EGP</a>
+      <a href="/en/aed-to-egp">AED → EGP</a>
+      <a href="/en/kwd-to-egp">KWD → EGP</a>
+      <a href="/en/gbp-to-egp">GBP → EGP</a>
+      <a href="/en/gold-18k">Gold 18k</a>
+      <a href="/en/gold-21k">Gold 21k</a>
+      <a href="/en/gold-24k">Gold 24k</a>
     </nav>
   </section>
 
   <section id="api" style="padding:var(--sp-5) 0 0">
-    <h2 style="font-size:var(--step-2)">البيانات دي كـ API</h2>
-    <p class="muted">كل رقم هنا على بُعد request واحد. مجاني، وغير تجاري.</p>
-    <pre class="card num" style="overflow:auto"><code dir="ltr">curl {API_PUBLIC_BASE}/v1/fx</code></pre>
+    <h2 style="font-size:var(--step-2)">This, as an API</h2>
+    <p class="muted">Every number here is one clean request away. Free tier, non-commercial.</p>
+    <pre class="card num" style="overflow:auto"><code>curl {API_PUBLIC_BASE}/v1/fx</code></pre>
     <p class="muted" style="margin-top:var(--sp-1)">
-      <a href="/en/docs">الـ Docs كاملة ←</a> · <a href="/en/status">الحالة</a>
+      <a href="/en/docs">Full API docs →</a> · <a href="/en/status">Status</a>
     </p>
-    <StatsStrip lang="ar" />
+    <StatsStrip lang="en" />
   </section>
 
   <section style="padding:var(--sp-4) 0">
-    <EmailCapture lang="ar" />
+    <EmailCapture lang="en" />
   </section>
 
-  <!-- Live updates (SSE) — same as the English home (add-live-updates). -->
+  <!-- Live updates (SSE) — progressive enhancement over the SSR values (add-live-updates). -->
   <script is:inline define:vars={{ apiBase: API_PUBLIC_BASE }}>
     (function () {
       if (!("EventSource" in window)) return;
       const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+      let es;
       function pulse() {
         if (reduce) return;
         const dot = document.querySelector(".dot");
         if (!dot) return;
         dot.classList.remove("pulse");
-        void dot.offsetWidth;
+        void dot.offsetWidth; // restart the animation
         dot.classList.add("pulse");
       }
       function countUp(el, from, to) {
@@ -170,17 +163,18 @@ const jsonLd = {
         }
         const upEl = document.getElementById("live-updated");
         if (upEl && d && d.ts) {
-          const next = new Intl.DateTimeFormat("ar-EG-u-nu-latn", {
-            day: "numeric", month: "long", year: "numeric",
-            hour: "2-digit", minute: "2-digit", timeZone: "Africa/Cairo",
-          }).format(new Date(d.ts));
+          const next = new Date(d.ts).toUTCString();
           if (upEl.textContent !== next) upEl.textContent = next;
         }
         if (changed) pulse();
       }
-      const es = new EventSource(apiBase + "/v1/stream");
-      es.addEventListener("snapshot", (e) => apply(e.data));
-      es.addEventListener("update", (e) => apply(e.data));
+      function connect() {
+        es = new EventSource(apiBase + "/v1/stream");
+        es.addEventListener("snapshot", (e) => apply(e.data));
+        es.addEventListener("update", (e) => apply(e.data));
+        // EventSource auto-reconnects on error; nothing else needed.
+      }
+      connect();
     })();
   </script>
 </Base>

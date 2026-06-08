@@ -16,9 +16,12 @@ export default defineConfig({
     routing: { prefixDefaultLocale: false },
   },
   integrations: [
-    // Per-language sitemap with daily lastmod; en ⇄ ar-EG alternates (add-seo-coverage).
+    // Per-language sitemap with daily lastmod; ar-EG ⇄ en alternates
+    // (add-seo-coverage). Arabic is the default audience — English lives under
+    // /en, Arabic at /ar (and aliased at the root /), so unprefixed URLs map to
+    // ar-EG.
     sitemap({
-      i18n: { defaultLocale: "en", locales: { en: "en", ar: "ar-EG" } },
+      i18n: { defaultLocale: "ar", locales: { ar: "ar-EG", en: "en" } },
       changefreq: "daily",
       lastmod: new Date(),
     }),

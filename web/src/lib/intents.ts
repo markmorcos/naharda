@@ -184,6 +184,7 @@ export const INTENTS: Intent[] = [
   cur("KWD", "Kuwaiti Dinar", "الدينار الكويتي", "How much is the Kuwaiti Dinar in Egypt today?", "الدينار الكويتي في مصر النهاردة بكام؟"),
   cur("GBP", "British Pound", "الجنيه الإسترليني", "How much is the British Pound in Egypt today?", "الجنيه الإسترليني في مصر النهاردة بكام؟"),
   parallelDollar,
+  gold(21),
   gold(18),
   gold(24),
 ];

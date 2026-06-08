@@ -1,13 +1,13 @@
 ---
-import Base from "../../layouts/Base.astro";
-import RateCard from "../../components/RateCard.astro";
-import CitySelect from "../../components/CitySelect.astro";
-import { getCities, getPrayer } from "../../lib/api";
+import Base from "../../../layouts/Base.astro";
+import RateCard from "../../../components/RateCard.astro";
+import CitySelect from "../../../components/CitySelect.astro";
+import { getCities, getPrayer } from "../../../lib/api";
 
 const { city = "cairo" } = Astro.params;
 const cities: any[] = (await getCities())?.data ?? [];
 const cityObj = cities.find((c: any) => c.slug === city);
-if (cities.length > 0 && !cityObj) return Astro.redirect("/prayer-times/cairo");
+if (cities.length > 0 && !cityObj) return Astro.redirect("/en/prayer-times/cairo");
 const name = cityObj?.name ?? city;
 
 const pr = await getPrayer(city);
@@ -36,14 +36,14 @@ const jsonLd = {
 <Base
   title={`Prayer Times in ${name} Today | Naharda`}
   description={`Today's prayer times in ${name}, Egypt: Fajr, Sunrise, Dhuhr, Asr, Maghrib and Isha — via Aladhan (Egyptian method), available as an API.`}
-  canonicalPath={`/prayer-times/${city}`}
-  enPath={`/prayer-times/${city}`}
+  canonicalPath={`/en/prayer-times/${city}`}
+  enPath={`/en/prayer-times/${city}`}
   arPath={`/ar/prayer-times/${city}`}
   jsonLd={jsonLd}
 >
   <article style="padding:var(--sp-3) 0">
     <h1 style="font-size:var(--step-3)">Prayer times in {name} today</h1>
-    <div style="margin:var(--sp-2) 0"><CitySelect cities={cities} current={city} base="/prayer-times/" /></div>
+    <div style="margin:var(--sp-2) 0"><CitySelect cities={cities} current={city} base="/en/prayer-times/" /></div>
     <div class="grid">
       {order.map((p) => <RateCard label={p} value={t[p] ?? "—"} />)}
     </div>

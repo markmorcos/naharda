@@ -5,7 +5,7 @@ interface Props {
 }
 const { lang = "en" } = Astro.props;
 const isAr = lang === "ar";
-const privacyHref = isAr ? "/ar/privacy" : "/privacy";
+const privacyHref = isAr ? "/ar/privacy" : "/en/privacy";
 const t = isAr
   ? {
       h: "تابع التحديثات",

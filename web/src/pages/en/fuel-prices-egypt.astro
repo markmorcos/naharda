@@ -1,7 +1,7 @@
 ---
-import Base from "../layouts/Base.astro";
-import RateCard from "../components/RateCard.astro";
-import { getFuel } from "../lib/api";
+import Base from "../../layouts/Base.astro";
+import RateCard from "../../components/RateCard.astro";
+import { getFuel } from "../../lib/api";
 
 const fuel = await getFuel();
 const items: any[] = fuel?.data ?? [];
@@ -31,8 +31,8 @@ const jsonLd = {
 <Base
   title="Fuel Prices in Egypt Today — 80, 92, 95, Diesel | Naharda"
   description="Today's official pump prices in Egypt for gasoline 80, 92, 95 and diesel (EGPC) — per litre, with effective date, and available via API."
-  canonicalPath="/fuel-prices-egypt"
-  enPath="/fuel-prices-egypt"
+  canonicalPath="/en/fuel-prices-egypt"
+  enPath="/en/fuel-prices-egypt"
   arPath="/ar/fuel-prices-egypt"
   jsonLd={jsonLd}
 >

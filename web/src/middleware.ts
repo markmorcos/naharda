@@ -8,7 +8,7 @@ import type { MiddlewareHandler } from "astro";
 
 // Rarely-changing pages: docs, the hijri date, fuel prices (quarterly), privacy.
 const LONG_LIVED =
-  /^\/(ar\/)?(docs|docs\/reference|hijri-date|fuel-prices-egypt|privacy)\/?$/;
+  /^\/(ar\/|en\/)?(docs|docs\/reference|hijri-date|fuel-prices-egypt|privacy)\/?$/;
 
 export const onRequest: MiddlewareHandler = async (context, next) => {
   const res = await next();

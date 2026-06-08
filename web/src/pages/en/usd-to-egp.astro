@@ -1,7 +1,7 @@
 ---
-import Base from "../layouts/Base.astro";
-import EmailCapture from "../components/EmailCapture.astro";
-import { getFX } from "../lib/api";
+import Base from "../../layouts/Base.astro";
+import EmailCapture from "../../components/EmailCapture.astro";
+import { getFX } from "../../lib/api";
 
 const fx = await getFX();
 const usd = fx?.data?.official?.usd ?? null;
@@ -39,8 +39,8 @@ const jsonLd = {
 <Base
   title="USD to EGP Today — Live Egypt Dollar Rate | Naharda"
   description="The US dollar to Egyptian pound today: official rate now, parallel-market range, and 30-day history — sourced and available via API."
-  canonicalPath="/usd-to-egp"
-  enPath="/usd-to-egp"
+  canonicalPath="/en/usd-to-egp"
+  enPath="/en/usd-to-egp"
   arPath="/ar/usd-to-egp"
   jsonLd={jsonLd}
 >
