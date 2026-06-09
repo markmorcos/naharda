@@ -1,6 +1,6 @@
 ---
-import Base from "../../layouts/Base.astro";
-import { API_BASE } from "../../lib/api";
+import Base from "../../../layouts/Base.astro";
+import { API_BASE } from "../../../lib/api";
 
 // Human-facing link + client-side fallback URL (the live, browser-reachable spec).
 const SPEC_URL = "https://api.naharda.com/v1/openapi.json";
@@ -31,15 +31,15 @@ const specContent =
 <Base
   title="API Reference — Naharda (interactive OpenAPI)"
   description="Interactive Naharda API reference generated from the live OpenAPI 3.1 document: browse every endpoint, see schemas and examples, and try requests against the live API."
-  canonicalPath="/docs/reference"
-  enPath="/docs/reference"
+  canonicalPath="/en/docs/reference"
+  enPath="/en/docs/reference"
 >
   <article style="padding:var(--sp-3) 0;max-width:46rem">
     <h1 style="font-size:var(--step-3)">API Reference</h1>
     <p class="muted">
       Generated from the live <a href={SPEC_URL}><code>/v1/openapi.json</code></a> document. Use
       the panel below to explore endpoints and try requests. Prefer prose? See the
-      <a href="/docs">hand-written docs</a>.
+      <a href="/en/docs">hand-written docs</a>.
     </p>
   </article>
 

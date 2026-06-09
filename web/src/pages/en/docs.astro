@@ -1,6 +1,6 @@
 ---
-import Base from "../layouts/Base.astro";
-import Endpoint from "../components/Endpoint.astro";
+import Base from "../../layouts/Base.astro";
+import Endpoint from "../../components/Endpoint.astro";
 
 const B = "https://api.naharda.com";
 const c = (p: string) => `curl ${B}${p}`;
@@ -9,8 +9,8 @@ const c = (p: string) => `curl ${B}${p}`;
 <Base
   title="API Docs — Naharda (Egypt data API)"
   description="Naharda API reference: FX, gold, fuel, prayer times, weather, AQI, calendar — endpoints, curl examples, the response envelope, rate limits, and the live SSE stream."
-  canonicalPath="/docs"
-  enPath="/docs"
+  canonicalPath="/en/docs"
+  enPath="/en/docs"
 >
   <article style="padding:var(--sp-3) 0;max-width:46rem">
     <h1 style="font-size:var(--step-3)">Naharda API</h1>
@@ -24,7 +24,7 @@ const c = (p: string) => `curl ${B}${p}`;
       <li><strong>Format:</strong> JSON only. Free tier is non-commercial.</li>
       <li>
         <strong>OpenAPI:</strong> <a href={`${B}/v1/openapi.json`}><code>{B}/v1/openapi.json</code></a> ·
-        <a href="/docs/reference">interactive reference →</a>
+        <a href="/en/docs/reference">interactive reference →</a>
       </li>
     </ul>
 
@@ -88,7 +88,7 @@ data: {"fx":{"official":{"usd":52.22}},"gold":{"world_derived":[{"karat":21,"val
 //      es.addEventListener("update", e => console.log(JSON.parse(e.data)));`} />
 
     <p class="muted" style="margin-top:var(--sp-4)">
-      Status: <a href="/status">naharda.com/status</a>. Attribution is included in every response;
+      Status: <a href="/en/status">naharda.com/status</a>. Attribution is included in every response;
       please keep it. Free tier is non-commercial.
     </p>
   </article>

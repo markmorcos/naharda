@@ -1,7 +1,7 @@
 ---
-import Base from "../layouts/Base.astro";
-import RateCard from "../components/RateCard.astro";
-import { getStats, pingPath } from "../lib/api";
+import Base from "../../layouts/Base.astro";
+import RateCard from "../../components/RateCard.astro";
+import { getStats, pingPath } from "../../lib/api";
 
 // The status page is itself a cacheable read — a burst of views hits the cache
 // rather than re-running the checks (add-status-and-docs).
@@ -46,8 +46,8 @@ const headColor = anyDown ? "var(--down)" : allUp ? "var(--up)" : "var(--accent)
 <Base
   title="Status — Naharda API"
   description="Live status of the Naharda API: component health and data freshness, with uptime history."
-  canonicalPath="/status"
-  enPath="/status"
+  canonicalPath="/en/status"
+  enPath="/en/status"
 >
   <article style="padding:var(--sp-3) 0;max-width:42rem">
     <h1 style="font-size:var(--step-3)">Status</h1>

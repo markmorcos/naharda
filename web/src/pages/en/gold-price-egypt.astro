@@ -1,7 +1,7 @@
 ---
-import Base from "../layouts/Base.astro";
-import RateCard from "../components/RateCard.astro";
-import { getGold } from "../lib/api";
+import Base from "../../layouts/Base.astro";
+import RateCard from "../../components/RateCard.astro";
+import { getGold } from "../../lib/api";
 
 const gold = await getGold();
 const byKarat = (k: number) =>
@@ -17,12 +17,10 @@ const jsonLd = {
   mainEntity: [
     {
       "@type": "Question",
-      name: "What is the price of 21k gold in Egypt today?",
+      name: "How is the gold price in Egypt calculated?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: g21
-          ? `World-derived 21k gold today is about ${g21.toFixed(2)} EGP per gram. Egypt-retail prices add the local masna3eya premium and are tracked separately.`
-          : "Live gold price temporarily unavailable.",
+        text: "Naharda publishes a world-derived price — spot gold converted at the live USD/EGP rate and scaled per karat (18k, 21k, 24k) — separately from Egypt-retail prices, which add the local masna3eya (workmanship) premium. The two streams are never merged.",
       },
     },
   ],
@@ -32,8 +30,8 @@ const jsonLd = {
 <Base
   title="Gold Price in Egypt Today — 21k, 18k, 24k | Naharda"
   description="Today's gold price in Egypt per gram for 18k, 21k and 24k — world-derived and (soon) Egypt-retail — sourced and available via API."
-  canonicalPath="/gold-price-egypt"
-  enPath="/gold-price-egypt"
+  canonicalPath="/en/gold-price-egypt"
+  enPath="/en/gold-price-egypt"
   arPath="/ar/gold-price-egypt"
   jsonLd={jsonLd}
 >
